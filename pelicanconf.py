@@ -32,7 +32,7 @@ DEFAULT_CATEGORY = 'Articles'
 DISPLAY_PAGES_ON_MENU = False
 DISPLAY_CATEGORIES_ON_MENU = False
 MENUITEMS = (\
-        ('Papers','/pages/papers.html'),\
+        ('Research','/pages/research.html'),\
         ('About','/pages/about.html'),\
         )
 

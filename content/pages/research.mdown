@@ -1,0 +1,61 @@
+Title: Research
+Date: 2015-10-04 16:04
+Author: real
+
+**Freedomlayer** is a research project for creating a distributed secure and
+efficient internet. I collect here a few articles written about the subject.
+Check out the [research mailing list](http://lists.freedomlayer.org).
+
+### Intro
+
+-   [Intro to the internet and current issues](
+    {filename}/articles/freedomlayer/intro_internet/intro_internet.mdown)
+
+
+-   [The Mesh Question](
+    {filename}/articles/freedomlayer/mesh_question/mesh_question.mdown)
+
+
+### Distributed Hash Tables
+
+
+-   [Intro to Distributed Hash Tables](
+    {filename}/articles/freedomlayer/dht_intro/dht_intro.mdown)
+
+-   [Stabilizing Chord](
+    {filename}/articles/freedomlayer/chord_stabilize/chord_stabilize.mdown)
+
+-   [Basic DHT Security Concepts](
+    {filename}/articles/freedomlayer/dht_basic_security/dht_basic_security.mdown)
+
+
+### Mesh Routing
+
+-   [Sqrt(n) Mesh routing](
+    {filename}/articles/freedomlayer/sqrt_n_routing/sqrt_n_routing.mdown)
+
+-   Virtual DHT Routing:
+    -   [Experimenting with Virtual DHT Routing](
+        {filename}/articles/freedomlayer/exp_virtual_dht_routing/exp_virtual_dht_routing.mdown)
+
+    -   [About cycles in stationary states of VDHT routing algorithms](
+        {filename}/articles/freedomlayer/vdht_cycles_rounds/vdht_cycles_rounds.mdown)
+
+    -   [Multi Named VDHT Routing](
+        {filename}/articles/freedomlayer/multi_named_vdht_routing/multi_named_vdht_routing.mdown)
+
+-   [The Distributed Post Office: Instant Hierarchy for Mesh Networks](
+    {filename}/articles/freedomlayer/dist_post_office/dist_post_office.mdown)
+
+-   [Landmarks Navigation by Random Walking](
+    {filename}/articles/freedomlayer/landmarks_navigation_rw/landmarks_navigation_rw.mdown)
+
+-   [The Unified Challenge-Response: Secure Time inside the Mesh](
+    {filename}/articles/freedomlayer/unified_challenge_response/unified_challenge_response.mdown)
+
+
+### Distributed Banking
+
+-   [The Trusted Supernode and Distributed Banking](
+    {filename}/articles/freedomlayer/dist_bank/dist_bank.mdown)
+
