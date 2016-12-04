@@ -40,7 +40,7 @@ MENUITEMS = (\
 DELETE_OUTPUT_DIRECTORY = True
 
 AUTHOR = u'real'
-SITENAME = u'freedomlayer'
+SITENAME = u'Freedomlayer'
 SITEURL = 'https://www.freedomlayer.org'
 
 PATH = 'content'
