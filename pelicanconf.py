@@ -10,7 +10,7 @@ THEME = 'freedomlayer_theme'
 DIRECT_TEMPLATES = \
     (('index','tags','categories','authors','archives','search','404'))
 
-STATIC_PATHS = ['articles']
+STATIC_PATHS = ['articles','pages']
 ARTICLE_PATHS = ['articles']
 PAGE_PATHS = ['pages']
 
