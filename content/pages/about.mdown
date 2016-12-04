@@ -29,7 +29,7 @@ There are a few ways in which you can help:
 
 If you want to know more about decentralized mesh
 networks, begin by educating yourself at the section.
-[Research Articles]({filename}/pages/research.html) section.
+[Research Articles]({filename}/pages/research.mdown) section.
 
 
 ## Contact
