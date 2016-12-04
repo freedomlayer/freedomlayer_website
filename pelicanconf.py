@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 PLUGIN_PATHS = ['/home/real/projects/websites/pelican_generic/plugins/pelican-plugins']
 PLUGINS = ['render_math','tipue_search']
 
+THEME = 'freedomlayer_theme'
+
 DIRECT_TEMPLATES = \
     (('index','tags','categories','authors','archives','search','404'))
 
