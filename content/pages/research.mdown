@@ -53,6 +53,9 @@ Check out the [research mailing list](http://lists.freedomlayer.org).
 -   [The Unified Challenge-Response: Secure Time inside the Mesh](
     {filename}/articles/freedomlayer/unified_challenge_response/unified_challenge_response.mdown)
 
+-   [A bound for Universal Routing on trees [pdf]](
+    {filename}/articles/assets/bounds_universal_tree_routing.pdf)
+
 
 ### Distributed Banking
 
