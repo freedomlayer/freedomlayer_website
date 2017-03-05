@@ -394,7 +394,7 @@ $\overleftarrow{a_{2^t}}$. We distinct between two cases:
 \overleftarrow{a_{2^t}}]({filename}images/locality_lemma.svg)
 
 *Case 1*: $d(\overleftarrow{a_{2^t}},a+2^t) <
-d(\overleftarrow{a^{2^{t+1}}},a+2^{t+1})$. Denote $z :=
+d(\overleftarrow{a_{2^{t+1}}},a+2^{t+1})$. Denote $z :=
 \overleftarrow{(\overleftarrow{a_{2^t}})_{2^t}}$ We will show that in this case
 $z = \overleftarrow{a_{2^{t+1}}}$.
 
@@ -425,7 +425,7 @@ By definition $y \in [a,\overleftarrow{a_{2^{t+1}}} - 2^t)$ (If this range
 collapses then $y$ is just $a$).
 
 If $y \in [a,\overleftarrow{a_{2^t}})$ then $\overleftarrow{a_{2^t}}$ is a
-better option for $z$, which is a contradiction to the stationary state of the
+better option for $y$, which is a contradiction to the stationary state of the
 algorithm.
 
 If $y \in (\overleftarrow{a_{2^t}},\overleftarrow{a_{2^{t+1}}} - 2^t)$ then $y$
