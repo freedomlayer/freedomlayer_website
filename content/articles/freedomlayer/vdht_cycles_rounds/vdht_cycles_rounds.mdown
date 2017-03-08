@@ -455,18 +455,18 @@ $C$ be a cycle of nodes. Then $R(C) = 1$.  ($C$ has only one round).
 
 **Proof: ** Let $C$ be a cycle of nodes during a stationary state of the IterF
 algorithm. Let $x$ be a node inside $C$. By the Locality Lemma there is direct
-path $P$ between $x$ and $\overrightarrow{x_{2^{l-1}}}$. Also, there is a direct
-path $Q$ between $\overleftarrow{x_{-2^{l-1}}}$ and $x$.
+path $P$ between $x$ and $\overleftarrow{x_{2^{l-1}}}$. Also, there is a direct
+path $Q$ between $\overrightarrow{x_{-2^{l-1}}}$ and $x$.
 
 ![The bath built from P and Q]({filename}images/one_round_theorem.svg)
 
 We can combine the above paths to a total path $T := (P , Q)$
 
-It is possible that $\overleftarrow{x_{-2^{l-1}}} =
-\overrightarrow{x_{2^{l-1}}}$. In this case we omit one of them in the path
-concatenation. If $\overleftarrow{x_{-2^{l-1}}} \neq
-\overrightarrow{x_{2^{l-1}}}$ then $h(\overleftarrow{x_{-2^{l-1}}}) =
-\overrightarrow{x_{2^{l-1}}}$.
+It is possible that $\overrightarrow{x_{-2^{l-1}}} =
+\overleftarrow{x_{2^{l-1}}}$. In this case we omit one of them in the path
+concatenation. If $\overrightarrow{x_{-2^{l-1}}} \neq
+\overleftarrow{x_{2^{l-1}}}$ then $h(\overrightarrow{x_{-2^{l-1}}}) =
+\overleftarrow{x_{2^{l-1}}}$.
 
 This is a path from $a$ to $a$ of length $2^l$, which means that $a$ is part of
 a cycle of only one round.
