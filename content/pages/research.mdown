@@ -4,7 +4,6 @@ Author: real
 
 **Freedomlayer** is a research project for creating a distributed secure and
 efficient internet. I collect here a few articles written about the subject.
-Check out the [research mailing list](http://lists.freedomlayer.org).
 
 ### Intro
 
