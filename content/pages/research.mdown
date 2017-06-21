@@ -58,6 +58,9 @@ efficient internet. I collect here a few articles written about the subject.
 -   [A bound for Universal Routing on trees [pdf]](
     {filename}/articles/assets/bounds_universal_tree_routing.pdf)
 
+-   [Landmarks routing with lookahead experiment results](
+    {filename}/articles/freedomlayer/landmarks_lookahead/landmarks_lookahead.mdown)
+
 
 
 ### Distributed Banking
