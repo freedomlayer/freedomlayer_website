@@ -49,6 +49,11 @@ TIMEZONE = 'UTC'
 
 DEFAULT_LANG = u'en'
 
+DATE_FORMATS = {
+        u'en': '%a, %d %b %Y',
+}
+
+
 # Domain for feed generation:
 FEED_DOMAIN = SITEURL 
 FEED_RSS = 'rss.xml'
