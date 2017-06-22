@@ -43,7 +43,7 @@ values and find the maximum:
 $$mdist(Coord(x), Coord(y)) := \max_{1 \leq i \leq k} {|Coord(x)_i - Coord(y)_i|}$$
 
 $mdist$ satisfies $mdist(Coord(x), Coord(y)) \leq d(x,y)$. This follows from
-the triange inequality over the metric $d$.
+the triangle inequality over the metric $d$.
 $mdist$ itself is a semi metric. It is symmetric and always satisfies the triangle
 inequality. However, it is possible that $mdist(C) = mdist(D)$ for two
 different coordinates $C \neq D$.
