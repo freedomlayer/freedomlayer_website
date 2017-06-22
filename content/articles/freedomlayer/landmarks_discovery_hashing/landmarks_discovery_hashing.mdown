@@ -16,7 +16,7 @@ valid coordinate.
 
 The code for all the experiments is written in
 [Rust](https://www.rust-lang.org), and could be found [here [github]](
-https://github.com/realcr/freedomlayer_code/tree/master/landmarks_discovery_hashing/net_coords)
+https://github.com/realcr/freedomlayer_code/tree/master/landmarks_discovery_hashing/net_coords).
 
 
 ### Hashing node ids into coordinates
