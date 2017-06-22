@@ -1,4 +1,4 @@
-Title: Node discovery with landmarks based routing
+Title: Node coordinate discovery by uniform hashing
 Date: 2017-06-22 10:50
 Author: real
 
@@ -13,6 +13,10 @@ network coordinate, $Coord(y)$.
 
 We discuss here one method of translation: hashing of node id into uniform
 valid coordinate.
+
+The code for all the experiments could be found [here](
+https://github.com/realcr/freedomlayer_code/tree/master/landmarks_discovery_hashing/net_coords)
+
 
 ### Hashing node ids into coordinates
 
@@ -121,6 +125,20 @@ Parameters for this experiment:
 - Amount of landmarks: $\log(n)^2$
 - Tie breaking by randomizing edge distances: Done with interval $[0x10000,
   0x20000)$. (This helps with having a low `average_min_indices` value).
+
+```bash
+git clone https://github.com/realcr/freedomlayer_code
+cd landmarks_discovery_hashing/net_coords
+```
+
+Edit `landmarks_discovery_hashing/net_coords/bin/randomize_coord_balanced` to
+use `randomize_coord_landmarks_coords`.
+
+Then run:
+
+```bash
+cargo run --bin randomize_coord_balanced --release
+```
 
 Results:
 
@@ -264,6 +282,12 @@ pub fn randomize_coord_rw_directional<R: Rng>(upper_constraints: &Vec<u64>,
 We check the uniformity of the resulting generated coordinates, the same way we
 did with the previous algorithm: `randomize_coord_landmarks_coords`.
 
+```bash
+git clone https://github.com/realcr/freedomlayer_code
+cd landmarks_discovery_hashing/net_coords
+cargo run --bin randomize_coord_balanced --release
+```
+
 ```
 g=10; rand    ; ni=0 |max_nr =   21| average_min_indices = 1
 g=10; rand    ; ni=1 |max_nr =   26| average_min_indices = 1
@@ -312,6 +336,20 @@ Ideally this number should be as low as possible: 1.
 
 Results for `randomize_coord_landmarks_coords`:
 
+```bash
+git clone https://github.com/realcr/freedomlayer_code
+cd landmarks_discovery_hashing/net_coords
+```
+
+Edit `landmarks_discovery_hashing/net_coords/bin/find_coords` to
+use `randomize_coord_landmarks_coords`.
+
+Then run:
+
+```bash
+cargo run --bin find_coords --release
+```
+
 ```
 max_visits = 2
 num_pairs = 10
@@ -355,6 +393,12 @@ g=11; planar  ; ni=1 |avg_path_len =   39.700 |avg_num_attempts =  2.800 |
 
 
 Results for `randomize_coord_rw_directional`:
+
+```bash
+git clone https://github.com/realcr/freedomlayer_code
+cd landmarks_discovery_hashing/net_coords
+cargo run --bin find_coords --release
+```
 
 ```
 max_visits = 2
