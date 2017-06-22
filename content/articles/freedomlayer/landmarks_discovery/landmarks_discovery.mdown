@@ -11,8 +11,8 @@ given that $x$ knows the network coordinate $Coord(y)$ of $y$.
 Hence we need some method of translating a node id $y$ into his
 network coordinate, $Coord(y)$.
 
-We discuss here two methods of translation: Hashing of node id into uniform
-valid coordinate, and the usage of overlay DHT.
+We discuss here one method of translation: hashing of node id into uniform
+valid coordinate.
 
 ### Hashing node ids into coordinates
 
@@ -42,7 +42,7 @@ There are some requirements to make this technique work:
   coordinates in the network.
 
 
-#### Generating random coordinates
+### Generating random coordinates
 
 We want to create a function $H: V(G) \rightarrow Coordinates$ that produces
 deterministic results, even when invoked from different nodes. For this to
@@ -55,7 +55,7 @@ We examined a few algorithms of generating random coordinates that are uniform
 over the set of nodes in the network. We introduce here two algorithms that
 gave us good results.
 
-#### `randomize_coord_landmarks_coords`
+### `randomize_coord_landmarks_coords`
 
 The first algorithm, called `randomize_coord_landmarks_coords`, does the
 following to create a random coordinate: For entry $j$, we pick a random entry
@@ -163,7 +163,7 @@ g=13; planar  ; ni=1 |max_nr =   19| average_min_indices = 1
 ```
 
 
-#### `randomize_coord_rw_directional`
+### `randomize_coord_rw_directional`
 
 The first algorithm presented, `randomize_coord_landmarks_coords`, generates
 random coordinates that don't satisfy the triangle inequality with respect to
@@ -196,15 +196,212 @@ of valid coordinates has infinite volume.
 
 If we add an artificial constraint of $coord_i \leq const * \max_i
 {Coord(l_j)_i}$, we get a bounded set of valid coordinates, with contraints
-that are linear inequalities.
+that are linear inequalities. This kind of shape is also known as a polytope.
+
+It appears that the question of choosing a random point inside the volume of a
+polytope was studied in the past. (Mostly for approximation of volume for high
+dimensional bodies, and finding redundant equations in a set of linear
+inequalities). 
+
+See, for example:
+
+- "Hit-And-Run algorithms for the identification of nonredundant linear
+  equations"
+  (H.C.P. Berbee, C.G.E Boender, A.H.G Rinnooy Kan, C.L. Scheffer, R.L. Smith,
+  J. Telgen)
+- "Random walks and an O*(n^5) volume algorithm for convex bodies"
+
+We use an algorithm that is similar to the one presented in "Hit-AndRun
+algorithms". It works as follows:
+
+We begin with some coordinate $C$. We can possibly pick one of $Coord(l_i)$ for
+some $1 \leq i \leq k$ as a starting point, or possibly the avarage of all the
+coordinates of the landmarks (If we use distance randomization, the average
+is usually a valid coordinate).
+
+In every step we pick a random entry index $j$, where $1 \leq j \leq k$. We
+check what is the possible range for $C_j$ so that it still satisfies the
+triangle inequality. Let $a$ be the small possible value, and $b$ be the highest
+possible value. We then pick a random value uniformly in $[a,b]$, and finally
+set $C_j$ to be the new value of entry $j$ of the coordinate.
+
+After enough steps, we expect to reach a random coordinate valid coordinate.
+
+This is the code for this algorithm:
+
+```rust
+pub fn randomize_coord_rw_directional<R: Rng>(upper_constraints: &Vec<u64>, 
+                  landmarks: &Vec<usize>, coords: &Vec<Vec<u64>>,
+                    mut rng: &mut R) -> Vec<u64> {
+
+    let entry_range: Range<usize> = Range::new(0, landmarks.len());
+    // Start from the average of all landmarks:
+    let mut cur_coord = average_landmarks(&landmarks, &coords);
+    // Start from a random landmark:
+    // let mut cur_coord = coords[landmarks[entry_range.ind_sample(rng)]].clone();
+
+    let mut good_iters = 0;
+    while good_iters < landmarks.len().pow(2) * 4 {
+        let i = entry_range.ind_sample(rng);
+
+        // Get range of valid values for entry number i:
+        let (low, high) = get_entry_rw_range(&cur_coord, i, 
+                                             &upper_constraints, landmarks, coords);
+
+        if low < high {
+            good_iters += 1;
+        }
+
+        // Set the new random value to the entry:
+        let value_range: Range<u64> = Range::new(low, high + 1);
+        cur_coord[i] = value_range.ind_sample(rng);
+    }
+
+    cur_coord
+}
+```
+
+We check the uniformity of the resulting generated coordinates, the same way we
+did with the previous algorithm: `randomize_coord_landmarks_coords`.
+
+```
+g=10; rand    ; ni=0 |max_nr =   21| average_min_indices = 1
+g=10; rand    ; ni=1 |max_nr =   26| average_min_indices = 1
+g=10; 2d      ; ni=0 |max_nr =   21| average_min_indices = 1
+g=10; 2d      ; ni=1 |max_nr =   58| average_min_indices = 1
+g=10; rand+2d ; ni=0 |max_nr =   24| average_min_indices = 1
+g=10; rand+2d ; ni=1 |max_nr =   26| average_min_indices = 1
+g=10; planar  ; ni=0 |max_nr =   33| average_min_indices = 1
+g=10; planar  ; ni=1 |max_nr =   16| average_min_indices = 1
+
+g=11; rand    ; ni=0 |max_nr =   39| average_min_indices = 1
+g=11; rand    ; ni=1 |max_nr =   78| average_min_indices = 1
+g=11; 2d      ; ni=0 |max_nr =   63| average_min_indices = 1
+g=11; 2d      ; ni=1 |max_nr =   47| average_min_indices = 1
+g=11; rand+2d ; ni=0 |max_nr =   27| average_min_indices = 1
+g=11; rand+2d ; ni=1 |max_nr =   32| average_min_indices = 1
+g=11; planar  ; ni=0 |max_nr =   72| average_min_indices = 1
+g=11; planar  ; ni=1 |max_nr =   28| average_min_indices = 1
+```
 
 
+### `find_coord` experiment
+
+We perform an end-to-end experiment, that works as follows.
+We pick a pair of nodes $x,y \in V(G)$ randomly. We then generate a random
+coordinate using a chosen coordinate generation algorithm. Call that coordinate
+$C$.
+
+$x$ then searches for a node with coordinate close to $C$, call that node $z$.
+Finally $y$ searches for $z$, given the coordinate $C$.
+
+$y$ searches for $z$ as follows: $y$ first chooses a random coordinate $M$ and
+finds a node $m$ close to $M$. From that node, $y$ tries to find the node $z$,
+given the coordinate $C$. If many iterations pass and $y$ couldn't find $z$
+from $m$, $y$ generates a new random coordinate $M$ and tries again.
+
+In the results tables:
+$g$ is the log of the size of the network, $ni$ means the network iteration.
+Again we check against $4$ types of networks: rand, 2d, rand+2d, planar.
+`avg_path_len` is the average resulting path length for arriving from $y$ to
+$z$. 
+
+`avg_num_attemps` is the most important number for this experiment: It
+shows how many times $y$ had to generate a new $M$ and try to find $z$.
+Ideally this number should be as low as possible: 1.
+
+Results for `randomize_coord_landmarks_coords`:
+
+```
+max_visits = 2
+num_pairs = 10
+
+g= 8; rand    ; ni=0 |avg_path_len =   17.100 |avg_num_attempts =  1.000 |
+g= 8; rand    ; ni=1 |avg_path_len =   15.900 |avg_num_attempts =  1.000 |
+g= 8; 2d      ; ni=0 |avg_path_len =   47.600 |avg_num_attempts =  2.200 |
+g= 8; 2d      ; ni=1 |avg_path_len =   55.500 |avg_num_attempts =  1.700 |
+g= 8; rand+2d ; ni=0 |avg_path_len =   15.400 |avg_num_attempts =  1.000 |
+g= 8; rand+2d ; ni=1 |avg_path_len =   17.700 |avg_num_attempts =  1.000 |
+g= 8; planar  ; ni=0 |avg_path_len =   25.100 |avg_num_attempts =  1.000 |
+g= 8; planar  ; ni=1 |avg_path_len =   23.300 |avg_num_attempts =  2.200 |
+
+g= 9; rand    ; ni=0 |avg_path_len =   21.200 |avg_num_attempts =  1.000 |
+g= 9; rand    ; ni=1 |avg_path_len =   13.900 |avg_num_attempts =  1.000 |
+g= 9; 2d      ; ni=0 |avg_path_len =   37.100 |avg_num_attempts =  1.900 |
+g= 9; 2d      ; ni=1 |avg_path_len =   41.700 |avg_num_attempts =  2.700 |
+g= 9; rand+2d ; ni=0 |avg_path_len =   19.800 |avg_num_attempts =  1.000 |
+g= 9; rand+2d ; ni=1 |avg_path_len =   17.400 |avg_num_attempts =  1.000 |
+g= 9; planar  ; ni=0 |avg_path_len =   48.500 |avg_num_attempts =  1.200 |
+g= 9; planar  ; ni=1 |avg_path_len =   50.400 |avg_num_attempts =  3.500 |
+
+g=10; rand    ; ni=0 |avg_path_len =   25.800 |avg_num_attempts =  1.000 |
+g=10; rand    ; ni=1 |avg_path_len =   16.500 |avg_num_attempts =  1.000 |
+g=10; 2d      ; ni=0 |avg_path_len =   48.300 |avg_num_attempts =  2.800 |
+g=10; 2d      ; ni=1 |avg_path_len =  126.100 |avg_num_attempts =  2.200 |
+g=10; rand+2d ; ni=0 |avg_path_len =   22.400 |avg_num_attempts =  1.000 |
+g=10; rand+2d ; ni=1 |avg_path_len =   15.400 |avg_num_attempts =  1.000 |
+g=10; planar  ; ni=0 |avg_path_len =   59.400 |avg_num_attempts =  1.200 |
+g=10; planar  ; ni=1 |avg_path_len =   81.900 |avg_num_attempts =  3.400 |
+
+g=11; rand    ; ni=0 |avg_path_len =   26.000 |avg_num_attempts =  1.900 |
+g=11; rand    ; ni=1 |avg_path_len =   23.400 |avg_num_attempts =  1.000 |
+g=11; 2d      ; ni=0 |avg_path_len =   64.900 |avg_num_attempts = 40.200 |
+g=11; 2d      ; ni=1 |avg_path_len =   56.100 |avg_num_attempts = 33.600 |
+g=11; rand+2d ; ni=0 |avg_path_len =   51.200 |avg_num_attempts =  1.000 |
+g=11; rand+2d ; ni=1 |avg_path_len =   25.700 |avg_num_attempts =  1.000 |
+g=11; planar  ; ni=0 |avg_path_len =   37.700 |avg_num_attempts =  5.800 |
+g=11; planar  ; ni=1 |avg_path_len =   39.700 |avg_num_attempts =  2.800 |
+```
 
 
+Results for `randomize_coord_rw_directional`:
+
+```
+max_visits = 2
+num_pairs = 10
+
+g= 8; rand    ; ni=0 |avg_path_len =   15.400 |avg_num_attempts =  1.000 |
+g= 8; rand    ; ni=1 |avg_path_len =   15.100 |avg_num_attempts =  1.000 |
+g= 8; 2d      ; ni=0 |avg_path_len =   41.900 |avg_num_attempts =  1.200 |
+g= 8; 2d      ; ni=1 |avg_path_len =   38.200 |avg_num_attempts =  1.100 |
+g= 8; rand+2d ; ni=0 |avg_path_len =   16.700 |avg_num_attempts =  1.000 |
+g= 8; rand+2d ; ni=1 |avg_path_len =   15.200 |avg_num_attempts =  1.000 |
+g= 8; planar  ; ni=0 |avg_path_len =   26.400 |avg_num_attempts =  2.900 |
+g= 8; planar  ; ni=1 |avg_path_len =   26.800 |avg_num_attempts =  1.400 |
+
+g= 9; rand    ; ni=0 |avg_path_len =   17.100 |avg_num_attempts =  1.000 |
+g= 9; rand    ; ni=1 |avg_path_len =   21.100 |avg_num_attempts =  1.000 |
+g= 9; 2d      ; ni=0 |avg_path_len =   47.200 |avg_num_attempts =  2.400 |
+g= 9; 2d      ; ni=1 |avg_path_len =   91.300 |avg_num_attempts =  5.900 |
+g= 9; rand+2d ; ni=0 |avg_path_len =   14.800 |avg_num_attempts =  1.000 |
+g= 9; rand+2d ; ni=1 |avg_path_len =   15.500 |avg_num_attempts =  1.000 |
+g= 9; planar  ; ni=0 |avg_path_len =   33.100 |avg_num_attempts =  1.000 |
+g= 9; planar  ; ni=1 |avg_path_len =   29.400 |avg_num_attempts =  1.600 |
+
+g=10; rand    ; ni=0 |avg_path_len =   21.000 |avg_num_attempts =  1.000 |
+g=10; rand    ; ni=1 |avg_path_len =   20.200 |avg_num_attempts =  1.000 |
+g=10; 2d      ; ni=0 |avg_path_len =   71.200 |avg_num_attempts =  4.700 |
+g=10; 2d      ; ni=1 |avg_path_len =  132.300 |avg_num_attempts =  3.900 |
+g=10; rand+2d ; ni=0 |avg_path_len =   33.900 |avg_num_attempts =  1.000 |
+g=10; rand+2d ; ni=1 |avg_path_len =   19.100 |avg_num_attempts =  1.000 |
+g=10; planar  ; ni=0 |avg_path_len =   46.800 |avg_num_attempts = 10.100 |
+g=10; planar  ; ni=1 |avg_path_len =   54.500 |avg_num_attempts =  2.800 |
+
+g=11; rand    ; ni=0 |avg_path_len =   77.300 |avg_num_attempts =  1.000 |
+g=11; rand    ; ni=1 |avg_path_len =   19.000 |avg_num_attempts =  1.000 |
+g=11; 2d      ; ni=0 |avg_path_len =  184.200 |avg_num_attempts = 17.900 |
+g=11; 2d      ; ni=1 |avg_path_len =  101.100 |avg_num_attempts =  9.300 |
+g=11; rand+2d ; ni=0 |avg_path_len =   24.100 |avg_num_attempts =  1.000 |
+g=11; rand+2d ; ni=1 |avg_path_len =   18.400 |avg_num_attempts =  1.000 |
+g=11; planar  ; ni=0 |avg_path_len =  104.800 |avg_num_attempts = 39.900 |
+g=11; planar  ; ni=1 |avg_path_len =  108.900 |avg_num_attempts = 37.800 |
+```
 
 
+Note that `avg_num_attempts` is almost always $1$ for the networks rand,
+rand+2d, but it blows up for the networks 2d, planar.
 
-
-
-
+This means that the idea of node discovery by node id hashing is practical for
+random looking network. However, at this point we don't know how to make it
+work for planar like networks.
 
