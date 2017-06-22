@@ -15,7 +15,7 @@ We discuss here one method of translation: hashing of node id into uniform
 valid coordinate.
 
 The code for all the experiments is written in
-[Rust](https://www.rust-lang.org), and could be found [here](
+[Rust](https://www.rust-lang.org), and could be found [here [github]](
 https://github.com/realcr/freedomlayer_code/tree/master/landmarks_discovery_hashing/net_coords)
 
 

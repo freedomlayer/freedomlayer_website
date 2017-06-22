@@ -9,7 +9,7 @@ We present here some experiment results for a variation of the landmarks
 routing method. Those results show that landmarks routing could be used in
 practice for efficient routing in a network.
 The experiments are written in [Rust](https://www.rust-lang.org) and could be
-found on github, [here](https://github.com/realcr/freedomlayer_code/tree/master/landmarks_lookahead).
+found on github, [here [github]](https://github.com/realcr/freedomlayer_code/tree/master/landmarks_lookahead).
 
 ## A Short reminder about network coordinates
 
