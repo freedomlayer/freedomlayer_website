@@ -1,9 +1,9 @@
 Title: Research
-Date: 2015-10-04 16:04
+Date: 2017-06-22 12:32
 Author: real
 
 **Freedomlayer** is a research project for creating a distributed secure and
-efficient internet. I collect here a few articles written about the subject.
+efficient Internet. We collect here articles about the subject.
 
 ### Intro
 
@@ -46,20 +46,22 @@ efficient internet. I collect here a few articles written about the subject.
     -   [A globally connected overlay for Virtual Ring Routing [pdf]](
         {filename}/articles/assets/chord_connected_routing.pdf)
 
+-   Landmarks based Routing:
+    -   [Landmarks Navigation by Random Walking](
+        {filename}/articles/freedomlayer/landmarks_navigation_rw/landmarks_navigation_rw.mdown)
+
+    -   [Landmarks routing with lookahead experiment results](
+        {filename}/articles/freedomlayer/landmarks_lookahead/landmarks_lookahead.mdown)
+
 -   [The Distributed Post Office: Instant Hierarchy for Mesh Networks](
     {filename}/articles/freedomlayer/dist_post_office/dist_post_office.mdown)
 
--   [Landmarks Navigation by Random Walking](
-    {filename}/articles/freedomlayer/landmarks_navigation_rw/landmarks_navigation_rw.mdown)
 
 -   [The Unified Challenge-Response: Secure Time inside the Mesh](
     {filename}/articles/freedomlayer/unified_challenge_response/unified_challenge_response.mdown)
 
 -   [A bound for Universal Routing on trees [pdf]](
     {filename}/articles/assets/bounds_universal_tree_routing.pdf)
-
--   [Landmarks routing with lookahead experiment results](
-    {filename}/articles/freedomlayer/landmarks_lookahead/landmarks_lookahead.mdown)
 
 
 
