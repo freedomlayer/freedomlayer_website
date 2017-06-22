@@ -53,6 +53,9 @@ efficient Internet. We collect here articles about the subject.
     -   [Landmarks routing with lookahead experiment results](
         {filename}/articles/freedomlayer/landmarks_lookahead/landmarks_lookahead.mdown)
 
+    -   [Node coordinate discovery by uniform hashing](
+        {filename}/articles/freedomlayer/landmarks_discovery_hashing/landmarks_discovery_hashing.mdown)
+
 -   [The Distributed Post Office: Instant Hierarchy for Mesh Networks](
     {filename}/articles/freedomlayer/dist_post_office/dist_post_office.mdown)
 
