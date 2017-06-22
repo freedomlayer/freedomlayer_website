@@ -235,7 +235,7 @@ We use an algorithm that is similar to the one presented in "Hit-AndRun
 algorithms". It works as follows:
 
 We begin with some coordinate $C$. We can possibly pick one of $Coord(l_i)$ for
-some $1 \leq i \leq k$ as a starting point, or possibly the avarage of all the
+some $1 \leq i \leq k$ as a starting point, or possibly the average of all the
 coordinates of the landmarks (If we use distance randomization, the average
 is usually a valid coordinate).
 
