@@ -192,7 +192,7 @@ network, $d$ is a metric over $V(G)$, the vertices of the network.
 Let $\{l_1, \dots , l_k\} \subseteq V(G)$ be the chosen landmarks for the network.
 For every node $x$, we define: 
 
-$$Coord(x) := \{d(x,l_1), \dots , d(x, l_k)\}$$,
+$$Coord(x) := \{d(x,l_1), \dots , d(x, l_k)\}$$
 
 We then define:
 
