@@ -227,7 +227,8 @@ See, for example:
   equations"
   (H.C.P. Berbee, C.G.E Boender, A.H.G Rinnooy Kan, C.L. Scheffer, R.L. Smith,
   J. Telgen)
-- "Random walks and an O*(n^5) volume algorithm for convex bodies"
+- "Random walks and an O*(n^5) volume algorithm for convex bodies" (Ravi
+  Kannan, László Lovász, Miklós Simonovits)
 
 We use an algorithm that is similar to the one presented in "Hit-AndRun
 algorithms". It works as follows:
