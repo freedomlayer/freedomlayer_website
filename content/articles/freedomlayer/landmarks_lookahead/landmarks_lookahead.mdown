@@ -48,16 +48,6 @@ $mdist$ itself is a semi metric. It is symmetric and always satisfies the triang
 inequality. However, it is possible that $mdist(C) = mdist(D)$ for two
 different coordinates $C \neq D$.
 
-We call a coordinate $A$ valid if it satisfies all the triange inequalities
-according to the metric $d$. In other words, $A_i + A_j \geq d(l_i,l_j) \geq
-|A_i - A_j|$. Hence if two coordinates $A$ and $B$ are valid, $\alpha \cdot A +
-(1 - \alpha) \cdot B$ is also a valid coordinate for $\alpha \in [0,1]$.
-Therefore the set of valid coordinates is convex.
-
-In addition, if a coordinate $A = (a_1, \dots , a_k)$ is valid, then $A +
-\beta \cdot 1 = (a_1 + \beta, \dots, a_k + \beta)$ is also valid. Hence the set
-of valid coordinates has infinite volume.
-
 ## Using lookahead
 
 In [Landmarks navigation by random walking](
