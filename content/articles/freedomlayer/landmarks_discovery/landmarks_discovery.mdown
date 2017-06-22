@@ -184,7 +184,7 @@ The virtual distance between $x$ and $y$.  $mdist$ satisfies $mdist(Coord(x),
 Coord(y)) \leq d(x,y)$. This follows from the triangle inequality over the
 metric $d$.
 
-We call a coordinate $A$ valid if it satisfies all the triange inequalities
+We call a coordinate $A$ valid if it satisfies all the triangle inequalities
 according to the metric $d$. In other words, $A_i + A_j \geq d(l_i,l_j) \geq
 |A_i - A_j|$. Hence if two coordinates $A$ and $B$ are valid, $\alpha \cdot A +
 (1 - \alpha) \cdot B$ is also a valid coordinate for $\alpha \in [0,1]$.
