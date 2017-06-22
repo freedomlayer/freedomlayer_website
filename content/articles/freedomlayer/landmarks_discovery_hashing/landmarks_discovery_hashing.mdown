@@ -96,7 +96,7 @@ We include here some results for this algorithm, for small sized networks.
 Explanation about how to read the result: $g$ means log in base 2 of the size
 of the network. (For example, $g=9$ means a network of $512$ nodes).
 We check against $4$ types of networks: 
-- rand: A random network. Every node is connected to $`1.5 * \log(n)`$ other
+- rand: A random network. Every node is connected to $1.5 * \log(n)$ other
   nodes.
 - 2d: A two dimensional grid.
 - rand+2d: A sum of a random network with a two dimensional grid.
