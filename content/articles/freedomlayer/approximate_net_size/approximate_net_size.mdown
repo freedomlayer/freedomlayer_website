@@ -253,6 +253,10 @@ $minHash[i]$ corresponds to the node with lowest hash value for the function
 $h_i$. $sign[nodeId](timestamp)$ is a digital signature by the node $nodeId$
 over some timestamp. This proves that $nodeId$ was recently alive.
 
+Given that every node knows the set of minimums for all the $r$ different hash
+functions, every node in the network can calculate an approximation for the
+amount of nodes in the network.
+
 We now describe the distributed algorithm for a given node $x$:
 
 **Initialization**
@@ -289,6 +293,7 @@ a current entry: $minHash_x[i]$ as the node with lowest value for $h_i$.
 5. Update $minHash_x[i] = minHash[i]$
 6. $x$ sends all his direct network neighbors a message that contains the
 updated $minHash$ entry: $UpdateMinNodeId(minHash_x[i])$
+
 
 ## Further research
 
