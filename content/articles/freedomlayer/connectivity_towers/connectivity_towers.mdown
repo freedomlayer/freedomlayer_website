@@ -59,10 +59,92 @@ contact with $\sqrt(n)$ nodes around him. This is not a fully decentralized
 setting, but we believe that the work that a tower does should be manageable
 and some might choose to do it for the right compensation.
 
-In this document we try to evaluate what parameters for this
+In this document we try to evaluate which parameters for this
 structure of towers (Amount of towers and amount of colors) we should use to
 make sure that the resulting overlay directed graph between towers is
 connected.
+
+
+## Experiment
+
+We experiment as follows: We generate different types of networks of different sizes.
+For a network of size $n$ nodes we pick $k = 2\cdot\log_{2}{n}$ different
+colors. For each color we pick $\sqrt(n) / k$ different towers (Towers of
+different color may overlap).
+
+```rust
+/// Choose nodes to be towers. We pick num_towers towers of every color. There are num_colors
+/// different tower colors.
+pub fn choose_towers<Node: Hash + Eq + Clone, R: Rng>(net: &Network<Node>, 
+                  num_towers: usize, num_colors: usize, rng: &mut R) -> Vec<Vec<usize>> {
+
+    let mut chosen_towers: Vec<Vec<usize>> = Vec::new();
+
+    for _ in 0 .. num_colors {
+        // Pick random towers for a certain color:
+        let mut ctowers = choose_k_nums(num_towers, net.igraph.node_count(), rng)
+            .into_iter()
+            .collect::<Vec<usize>>();
+        // Sort for determinism:
+        ctowers.sort();
+        chosen_towers.push(ctowers);
+    }
+    chosen_towers
+}
+```
+
+Then we calculate iteratively for every node $v$ in the network the closest
+tower of color $c$ for $0 \leq c < k$. This is how one iteration looks like:
+
+```rust
+/// Perform one iteration of calculating towers info.
+/// Return whether any changed happen during this iteration.
+fn iter_towers_info<Node: Hash + Eq + Clone>(net: &Network<Node>,
+                 chosen_towers: &Vec<Vec<usize>>,
+                 towers_info: &mut Vec<Vec<Option<LocalTowerInfo>>>) -> bool {
+
+    let mut changed = false;
+
+    for node in net.igraph.nodes() {
+        for nei in net.igraph.neighbors(node) {
+            for tower_color in 0 .. chosen_towers.len() {
+                if towers_info[node][tower_color].is_none() {
+                    continue
+                }
+                // This is the candidate LocalTowerInfo for nei:
+                let mut candidate_info = towers_info[node][tower_color].clone().unwrap();
+                candidate_info.distance += 1;
+                candidate_info.gateway = node;
+                // Current nei's LocalTowerInfo:
+
+                if towers_info[nei][tower_color].is_none() {
+                    changed = true;
+                    towers_info[nei][tower_color] = Some(candidate_info);
+                    continue
+                }
+
+                let nei_info = towers_info[nei][tower_color].clone().unwrap();
+
+                if (candidate_info.distance,
+                    candidate_info.gateway,
+                    candidate_info.tower_node) <
+                   (nei_info.distance,
+                    nei_info.gateway,
+                    nei_info.tower_node) {
+
+                    changed = true;
+                    towers_info[nei][tower_color] = Some(candidate_info);
+
+                }
+            }
+        }
+    }
+    changed
+}
+```
+
+Finally, we create a directed overlay graph of the towers and check its connectivity.
+
 
 
 
