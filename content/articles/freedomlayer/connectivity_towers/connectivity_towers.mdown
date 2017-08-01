@@ -33,6 +33,8 @@ Our method to do this is by choosing a random set of about $\sqrt(n)$ nodes,
 called the "towers". Every tower out of the $\sqrt(n)$ towers has some color
 $c$, where $0 \leq c < k$.
 
+TODO: Add a picture of nodes and towers, and the relationships between them.
+
 Every node keeps contact with the closest tower of color $c$ for $0 \leq c <
 k$. This amounts to a total of $c$ towers. Whenever a node $x$ wants to send a
 message to a remote node $y$ in the network, $x$ sends the message to one of the
@@ -70,7 +72,8 @@ connected.
 We experiment as follows: We generate different types of networks of different sizes.
 For a network of size $n$ nodes we pick $k = 2\cdot\log_{2}{n}$ different
 colors. For each color we pick $\sqrt(n) / k$ different towers (Towers of
-different color may overlap).
+different color may overlap). This is the code that picks the towers (written
+in [Rust](https://www.rust-lang.org)):
 
 ```rust
 /// Choose nodes to be towers. We pick num_towers towers of every color. There are num_colors
@@ -143,8 +146,211 @@ fn iter_towers_info<Node: Hash + Eq + Clone>(net: &Network<Node>,
 }
 ```
 
-Finally, we create a directed overlay graph of the towers and check its connectivity.
+Finally, we create a directed overlay graph of the towers and check its
+connectivity. We check two types of connectivity for the overlay graph: weak
+connectivity and strong connectivity. Weak connectivity is checked using
+[dfs](https://en.wikipedia.org/wiki/Depth-first_search), and strong
+connectivity is checked usign [kosaraju
+algorithm](https://en.wikipedia.org/wiki/Kosaraju%27s_algorithm) for finding
+strongly connected components. Both of those algorithms were taken from the
+[petgraph](https://github.com/bluss/petgraph) rust crate.
 
 
+This is the code that checks connectivity:
+
+```rust
+/// Check if overlay directed graph of towers is connected.
+/// Returns (connected, strongly_connected)
+pub fn is_connected(chosen_towers: &Vec<Vec<usize>>, 
+        towers_info: &Vec<Vec<Option<LocalTowerInfo>>>) -> (bool, bool) {
+
+    // An overlay directed graph of the towers in the network
+    // and the connections between them.
+    // A tower T is connected to a tower T' if T' is the closest tower to T of some color.
+    let mut towers_graph: graphmap::DiGraphMap<usize,()> = 
+        graphmap::DiGraphMap::new();
+
+    // Add towers as nodes to the graph:
+    for tower_color in 0 .. chosen_towers.len() {
+        for tower_index in 0 .. chosen_towers[tower_color].len() {
+            towers_graph.add_node(chosen_towers[tower_color][tower_index]);
+        }
+    }
+
+    // For every tower, add all connections to closest local towers as nodes.
+    let graph_nodes = towers_graph.nodes().collect::<Vec<usize>>();
+    for tower_node in graph_nodes {
+        for tower_color in 0 .. chosen_towers.len() {
+            towers_graph.add_edge(tower_node, 
+                  towers_info[tower_node][tower_color].clone().unwrap().tower_node,());
+        }
+    }
+
+    let sconnected_comps = kosaraju_scc(&towers_graph);
+    (connected_components(&towers_graph) == 1, sconnected_comps.len() == 1)
+}
+```
+
+TODO: Explain how to read the experiment results.
+
+Experiment results:
+
+```
+$ cargo run --bin towers_scc --release | tee ../results/towers_scc_g_2_weakly_2017_07_26.txt
+   Compiling net_coords v0.1.0 (file:///home/real/projects/d/freedomlayer/freedomlayer_research/network_coords/net_coords)
+    Finished release [optimized] target(s) in 3.30 secs
+     Running `target/release/towers_scc`
+Checking if local towers overlay graph is strongly connected
+
+g= 6; rand    ; ni=0 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; rand    ; ni=1 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; 2d      ; ni=0 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; 2d      ; ni=1 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; rand+2d ; ni=0 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; rand+2d ; ni=1 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; planar  ; ni=0 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; planar  ; ni=1 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; tree    ; ni=0 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+g= 6; tree    ; ni=1 |num_colors =    12 |num_towers =     1 | connected = V| sconnected = V
+
+g= 7; rand    ; ni=0 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; rand    ; ni=1 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; 2d      ; ni=0 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; 2d      ; ni=1 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; rand+2d ; ni=0 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; rand+2d ; ni=1 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; planar  ; ni=0 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; planar  ; ni=1 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; tree    ; ni=0 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+g= 7; tree    ; ni=1 |num_colors =    14 |num_towers =     1 | connected = V| sconnected = V
+
+g= 8; rand    ; ni=0 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; rand    ; ni=1 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; 2d      ; ni=0 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; 2d      ; ni=1 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; rand+2d ; ni=0 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; rand+2d ; ni=1 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; planar  ; ni=0 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; planar  ; ni=1 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; tree    ; ni=0 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = V
+g= 8; tree    ; ni=1 |num_colors =    16 |num_towers =     2 | connected = V| sconnected = X
+
+g= 9; rand    ; ni=0 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; rand    ; ni=1 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; 2d      ; ni=0 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; 2d      ; ni=1 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; rand+2d ; ni=0 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; rand+2d ; ni=1 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; planar  ; ni=0 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; planar  ; ni=1 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; tree    ; ni=0 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = V
+g= 9; tree    ; ni=1 |num_colors =    18 |num_towers =     2 | connected = V| sconnected = X
+
+g=10; rand    ; ni=0 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; rand    ; ni=1 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; 2d      ; ni=0 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; 2d      ; ni=1 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; rand+2d ; ni=0 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; rand+2d ; ni=1 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; planar  ; ni=0 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; planar  ; ni=1 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+g=10; tree    ; ni=0 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = X
+g=10; tree    ; ni=1 |num_colors =    20 |num_towers =     2 | connected = V| sconnected = V
+
+g=11; rand    ; ni=0 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; rand    ; ni=1 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; 2d      ; ni=0 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; 2d      ; ni=1 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; rand+2d ; ni=0 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; rand+2d ; ni=1 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; planar  ; ni=0 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; planar  ; ni=1 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = V
+g=11; tree    ; ni=0 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = X
+g=11; tree    ; ni=1 |num_colors =    22 |num_towers =     3 | connected = V| sconnected = X
+
+g=12; rand    ; ni=0 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; rand    ; ni=1 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; 2d      ; ni=0 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; 2d      ; ni=1 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; rand+2d ; ni=0 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; rand+2d ; ni=1 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; planar  ; ni=0 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; planar  ; ni=1 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; tree    ; ni=0 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = V
+g=12; tree    ; ni=1 |num_colors =    24 |num_towers =     3 | connected = V| sconnected = X
+
+g=13; rand    ; ni=0 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; rand    ; ni=1 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; 2d      ; ni=0 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; 2d      ; ni=1 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; rand+2d ; ni=0 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; rand+2d ; ni=1 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; planar  ; ni=0 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; planar  ; ni=1 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = V
+g=13; tree    ; ni=0 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = X
+g=13; tree    ; ni=1 |num_colors =    26 |num_towers =     4 | connected = V| sconnected = X
+
+g=14; rand    ; ni=0 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; rand    ; ni=1 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; 2d      ; ni=0 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; 2d      ; ni=1 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; rand+2d ; ni=0 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; rand+2d ; ni=1 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; planar  ; ni=0 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; planar  ; ni=1 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = V
+g=14; tree    ; ni=0 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = X
+g=14; tree    ; ni=1 |num_colors =    28 |num_towers =     5 | connected = V| sconnected = X
+
+g=15; rand    ; ni=0 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; rand    ; ni=1 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; 2d      ; ni=0 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; 2d      ; ni=1 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; rand+2d ; ni=0 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; rand+2d ; ni=1 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; planar  ; ni=0 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; planar  ; ni=1 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = V
+g=15; tree    ; ni=0 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = X
+g=15; tree    ; ni=1 |num_colors =    30 |num_towers =     7 | connected = V| sconnected = X
+
+g=16; rand    ; ni=0 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; rand    ; ni=1 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; 2d      ; ni=0 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; 2d      ; ni=1 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; rand+2d ; ni=0 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; rand+2d ; ni=1 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; planar  ; ni=0 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = V
+g=16; planar  ; ni=1 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = X
+g=16; tree    ; ni=0 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = X
+g=16; tree    ; ni=1 |num_colors =    32 |num_towers =     9 | connected = V| sconnected = X
+
+g=17; rand    ; ni=0 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = V
+g=17; rand    ; ni=1 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = V
+g=17; 2d      ; ni=0 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = X
+g=17; 2d      ; ni=1 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = X
+g=17; rand+2d ; ni=0 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = V
+g=17; rand+2d ; ni=1 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = V
+g=17; planar  ; ni=0 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = V
+g=17; planar  ; ni=1 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = X
+g=17; tree    ; ni=0 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = X
+g=17; tree    ; ni=1 |num_colors =    34 |num_towers =    11 | connected = V| sconnected = X
+
+g=18; rand    ; ni=0 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; rand    ; ni=1 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; 2d      ; ni=0 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = X
+g=18; 2d      ; ni=1 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; rand+2d ; ni=0 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; rand+2d ; ni=1 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; planar  ; ni=0 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; planar  ; ni=1 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = V
+g=18; tree    ; ni=0 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = X
+g=18; tree    ; ni=1 |num_colors =    36 |num_towers =    15 | connected = V| sconnected = X
+
+g=19; rand    ; ni=0 |num_colors =    38 |num_towers =    20 | connected = V| sconnected = V
+g=19; rand    ; ni=1 |num_colors =    38 |num_towers =    20 | connected = V| sconnected = V
+g=19; 2d      ; ni=0 |num_colors =    38 |num_towers =    20 | connected = V| sconnected = V
+g=19; 2d      ; ni=1 |num_colors =    38 |num_towers =    20 | connected = V| sconnected = V
+g=19; rand+2d ; ni=0 |num_colors =    38 |num_towers =    20 | connected = V| sconnected = V
+g=19; rand+2d ; ni=1 |num_colors =    38 |num_towers =    20 | connected = V| sconnected = V
+```
 
 
