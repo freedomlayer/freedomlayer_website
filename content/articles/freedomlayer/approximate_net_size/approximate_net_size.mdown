@@ -73,7 +73,7 @@ $$\E[min] = \int_{0}^{1} tf(t)dt = \int_{0}^{1} nt(1-t)^{n-1}dt$$
 To solve this we first calculate:
 
 $$\begin{split}
-    \int_{0}^{1}t(1-t)^{n-1}dt = & \left[\frac{t(1-t)^n}{n}\right]_{0}^{1} -
+    \int_{0}^{1}t(1-t)^{n-1}dt = & \left[-\frac{t(1-t)^n}{n}\right]_{0}^{1} -
     \int_{0}^{1} 1 \cdot \frac{(1-t)^n}{-n}dt \\
     & = \int_{0}^{1}\frac{(1-t)^n}{n}dt = 
     \left[\frac{(1-t)^{n+1}}{-n(n+1)}\right]_{0}^{1} \\
