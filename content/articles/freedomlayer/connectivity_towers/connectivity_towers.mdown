@@ -1,0 +1,68 @@
+Title: The connectivity of sqrt(n) towers
+Date: 2017-08-01 17:32
+Author: real
+
+## Abstract
+
+Suppose $G$ is a connected graph of $n$ vertices. Let $k > 0$ be some
+integer, and let $T_i \subseteq V(G)$ be a set of vertices, for $0 \leq i < k$.
+We say that $T_i$ is the set of "towers" of color $i$.
+
+For every vertex $v \in V(G)$ we denote by $t_i(v)$ the tower $x$ of color $i$
+that is closest to $v$ in the graph. (If there is a tie between a few
+candidates, we break it by picking the tower of color $i$ with lowest id).
+
+Denote the set $T = union_{i}{T_i}$ of all the towers. We now define a new
+directed graph $Q$ with $V(Q) = T$, the set of all towers. For two towers $u, v
+\in V(Q)$, $(u,v) \in E(Q)$ iff $t_i(u) = v$ for some $0 \leq i < k$.
+
+We want to know in which cases $Q$ is a [strongly
+connected](https://en.wikipedia.org/wiki/Strongly_connected_component) or weakly
+connected (Connected as an undirected graph). In other words, we want to know
+whether the connections towers form a connected graph.
+
+
+## Motivation
+
+Suppose that we are given a large network $G$. Every node is connected directly
+to a few other nodes, and because of the large size of the network, no node can
+percieve the full structure of the network. We want to be able to route
+messages in this network between any pair of nodes.
+
+Our method to do this is by choosing a random set of about $\sqrt(n)$ nodes,
+called the "towers". Every tower out of the $\sqrt(n)$ towers has some color
+$c$, where $0 \leq c < k$.
+
+Every node keeps contact with the closest tower of color $c$ for $0 \leq c <
+k$. This amounts to a total of $c$ towers. Whenever a node $x$ wants to send a
+message to a remote node $y$ in the network, $x$ sends the message to one of the
+close towers he keeps contact with. The towers then route the message all the
+way to one of the towers that keep contact with $y$, and finally that tower
+passes the message to $y$.
+
+For this scheme to work, we have to make sure that the towers know how to route
+messages between every two towers. Every node maintains contact with $k$
+different towers, and this is also true for tower nodes. We use those
+connections as an overlay graph between the towers. In this overlay directed
+graph, every tower is connected to $k-1$ other towers and has a self edge
+himself. The self edge happens because a tower $x_c$ of color $c$ has
+$t_c(x_c) = x_c$.
+
+**If we can assume that the overlay directed graph between towers is somehow
+connected**, we should be able to manage routing between the towers. As a simple
+solution, as there are only $\sqrt(n)$ towers, this could be done by letting
+every tower remember a shortest path to every other tower.
+
+Note that in this setting a tower does more work than a usual node. A tower has
+to remember shortest path to other $\sqrt(n)$ towers, and in addition maintain
+contact with $\sqrt(n)$ nodes around him. This is not a fully decentralized
+setting, but we believe that the work that a tower does should be manageable
+and some might choose to do it for the right compensation.
+
+In this document we try to evaluate what parameters for this
+structure of towers (Amount of towers and amount of colors) we should use to
+make sure that the resulting overlay directed graph between towers is
+connected.
+
+
+
