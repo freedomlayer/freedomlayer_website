@@ -231,9 +231,16 @@ give very similar results, and they have the best results in this group. The
 other two methods (approx_size_harmonic_before and approx_size_mean_after) have
 very bad results.
 
-It is reasonable that calculating an harmonic mean after the inverse-like
-operation $(1/min) - 1$ is somewhat similar to calculating arithmetic mean
-before the inverse-like operation $(1/min) - 1$.
+A friend noted that `approx_size_mean_after` and `approx_size_harmonic_before`
+should be identical (up to floating point math errors). This is because:
+$$\begin{split}
+    mean_i{ \left(\frac{1}{a_i} - 1 \right) } & = \frac{\sum_{i}{\left(\frac{1}{a_i} - 1\right)}}{n} \\
+    & = \frac{\sum_{i}{\frac{1}{a_i}}}{n} - 1 = \frac{1}{\frac{n}{\sum_{i}{\frac{1}{a_i}}} } - 1 \\
+    & = \frac{1}{harmonic_{i}{(a_i)}} - 1
+\end{split}$$
+
+For similar reasons, `approx_size_mean_before` and `approx_size_harmonic_after`
+should be pretty close.
 
 Our choice for combining the min values is going to be the
 `approx_size_mean_before`, as it is the simplest to reason about.
