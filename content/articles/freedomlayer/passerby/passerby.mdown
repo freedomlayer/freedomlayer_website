@@ -193,27 +193,27 @@ messages:
 
 Input messages:
 
-- Initialize (privateKey)
+- **Initialize(privateKey)**
 
-- PortConnected (portId)
+- **PortConnected(neighborIdHash)**
     A new port was connected to the passerby router.
 
-- PortDisconnected (portId)
+- **PortDisconnected(neighborIdHash)**
     A port was disconnected from the passerby router.
 
-- MsgFromPort(portId, msg)
+- **MsgFromPort(portId, msg)**
     Message was received from a given port.
 
-- SendMessage (remoteNodeIdHash, datagramData)
+- **SendMessage(remoteNodeIdHash, datagramData)**
     A request to send a message to a remote node id hash.
 
 
 Output messages:
 
-- MsgToPort(portId, msg)
+- **MsgToPort(portId, msg)**
     A request to send message through port portId.
 
-- MessageReceived (remoteNodeIdHash, datagramData)
+- **MessageReceived(remoteNodeIdHash, datagramData)**
     A remote message was received from remoteNodeIdHash.
 
 
@@ -227,8 +227,8 @@ The structure of msg in MsgFromPort and MsgToPort is as follows:
 - messageType
 - payload
 
-We rely on a service external to the Passerby router to cut the stream into
-frames of discrete messages.
+We rely on a service external to the Passerby router to cut the stream of bytes
+into frames of discrete messages.
 
 ## Messages between routing engines
 
