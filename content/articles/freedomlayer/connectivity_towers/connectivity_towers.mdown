@@ -22,8 +22,7 @@ connected (Connected as an undirected graph). In other words, we want to know
 whether the connections towers form a connected graph.
 
 Our experiments show that for $k \geq \log_{2}{n}$ the resulting overlay graph $Q$
-is probably weakly connected, but not necessarily strongly connected. You can
-find the code for the experiments on github
+is probably weakly connected, but not necessarily strongly connected. 
 
 The experiments are written in [Rust](https://www.rust-lang.org) and could be
 found [here
