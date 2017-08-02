@@ -16,7 +16,8 @@ method. The size approximation is done by taking the minimum hashes of various
 node ids and performing a transformation over those values.
 
 The experiments are written in [Rust](https://www.rust-lang.org) and could be
-[here [github]](https://github.com/realcr/freedomlayer_code/tree/master/approximate_net).
+found [here
+[github]](https://github.com/realcr/freedomlayer_code/tree/master/approximate_net).
 
 
 ## Hashing node ids
