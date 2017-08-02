@@ -1,17 +1,12 @@
 Title: About
-Date: 2016-12-04 18:19
+Date: 2017-08-02 18:09
 Author: real
 
-Hi. Welcome to the **Freedom Layer** project website.  We work here on designing a
-scalable, secure and distributed mesh network, together. We put strong
-emphasis on the theoretic side of things, researching algorithms for secure
-routing in a flat network. At the same time we strive to implement a practical
-real world solution.
-
-These days we are mostly busy with documenting our current knowledge. Some
-parts of it are common knowledge, while others are the result of recent
-research. We also try to educate newcomers on the core concepts of distributed
-mesh networks.
+Hi. Welcome to the **Freedomlayer** project website.  We work here on designing a
+scalable, secure and distributed mesh network. We put strong
+emphasis on the theoretic side of things, researching scalable algorithms for
+secure routing in a flat network. At the same time we strive to implement a
+practical real world solution.
 
 We are still in research stages. These days we mostly try to understand how to
 route a message securly through a mesh network. We have some good ideas, but we
