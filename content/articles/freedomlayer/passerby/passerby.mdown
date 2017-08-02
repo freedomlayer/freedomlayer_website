@@ -62,7 +62,7 @@ $\sqrt{n}$ tower nodes, and compensate them properly somehow.
 
 Given that the network has $n$ nodes, we choose to have $k = \log_{2}{n}$
 different tower colors. At a total of $\sqrt{n}$ towers, this means that we
-will have $\sqrt{n} / \log{2}{n}$ towers of every color.
+will have $\sqrt{n} / \log_{2}{n}$ towers of every color.
 
 Every node $v$ maintains paths to the closest tower $t_c(v)$ for $0 \leq c <
 k$. For example, that if $w$ happens to be a tower of color $c$, then $t_c(w) =
