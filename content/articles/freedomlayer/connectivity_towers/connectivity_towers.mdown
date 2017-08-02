@@ -29,8 +29,8 @@ to a few other nodes, and because of the large size of the network, no node can
 percieve the full structure of the network. We want to be able to route
 messages in this network between any pair of nodes.
 
-Our method to do this is by choosing a random set of about $\sqrt(n)$ nodes,
-called the "towers". Every tower out of the $\sqrt(n)$ towers has some color
+Our method to do this is by choosing a random set of about $\sqrt{n}$ nodes,
+called the "towers". Every tower out of the $\sqrt{n}$ towers has some color
 $c$, where $0 \leq c < k$.
 
 Every node keeps contact with the closest tower of color $c$ for $0 \leq c <
@@ -49,20 +49,20 @@ himself. The self edge happens because a tower $x_c$ of color $c$ has
 $t_c(x_c) = x_c$.
 
 ![Overlay directed graph of towers]({filename}images/towers_and_nodes.svg)
-In the picture: The overlay directed graph between the towers (Self edges are
-ommited). Note that the graph is connected, but not strongly connected. 
-The black small dots represent regular nodes. For example: To route a message
-from the node $x$ to the node $y$, the message has to pass between various
-towers along the way.
+> In the picture: The overlay directed graph between the towers (Self edges are
+> ommited). Note that the graph is connected, but not strongly connected. 
+> The black small dots represent regular nodes. For example: To route a message
+> from the node $x$ to the node $y$, the message has to pass between various
+> towers along the way.
 
 **If we can assume that the overlay directed graph between towers is somehow
 connected**, we should be able to manage routing between the towers. As a simple
-solution, as there are only $\sqrt(n)$ towers, this could be done by letting
+solution, as there are only $\sqrt{n}$ towers, this could be done by letting
 every tower remember a shortest path to every other tower.
 
 Note that in this setting a tower does more work than a usual node. A tower has
-to remember shortest path to other $\sqrt(n)$ towers, and in addition maintain
-contact with $\sqrt(n)$ nodes around him. This is not a fully decentralized
+to remember shortest path to other $\sqrt{n}$ towers, and in addition maintain
+contact with $\sqrt{n}$ nodes around him. This is not a fully decentralized
 setting, but we believe that the work that a tower does should be manageable
 and some might choose to do it for the right compensation.
 
@@ -76,7 +76,7 @@ connected.
 
 We experiment as follows: We generate different types of networks of different sizes.
 For a network of size $n$ nodes we pick $k = 2\cdot\log_{2}{n}$ different
-colors. For each color we pick $\sqrt(n) / k$ different towers (Towers of
+colors. For each color we pick $\sqrt{n} / k$ different towers (Towers of
 different color may overlap). This is the code that picks the towers (written
 in [Rust](https://www.rust-lang.org)):
 
@@ -382,7 +382,7 @@ We can see in the results that the resulting overlay directed graph of towers
 is not always strongly connected, but it seems to be weakly connected in all of
 the examples we have checked. Similar results apply for the choice of
 $k = \log_{2}{n}$ (The overlay directed graph of towers seems to be weakly
-connected, but not strongly connected). For $k = \log_{2}{n}/2$ the
+connected, but not strongly connected). For $k = 0.5\log_{2}{n}$ the
 overlay directed graph of towers is sometimes not weakly connected.
 
 
@@ -393,11 +393,13 @@ towers overlay directed graph for $k = \log_{2}{n}$. We could apply
 the following approximate explanation:
 
 Every tower is connected in the overlay graph to a few other towers. If these
-connections were random, then we would expect that for $k > \log(\sqrt(n))$ the
+connections were random, then we would expect that for $k > \log(\sqrt{n})$ the
 towers overlay graph [will start becoming weakly
 connected](https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model).
 
 This is not exact, because the connections between the towers are not really
 random, as a connection between two towers mean that they are close in the
 original graph.
+
+
 
