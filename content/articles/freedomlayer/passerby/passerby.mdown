@@ -44,7 +44,7 @@ to a tower near $y$. That tower then passes the message to $y$.
 In this protocol the towers have to do more work than the regular nodes. All a
 regular node does is to maintain contact with $O(\log_{2}{n})$ towers, while a
 tower node maintains paths to $O(\sqrt{n})$ other towers, and keeps contact
-with $O(\sqrt{n}))$ regular nodes around him. In addition, a tower is
+with $O(\sqrt{n})$ regular nodes around him. In addition, a tower is
 responsible for the communication of $O(\sqrt{n})$ nodes.
 
 Some machines might not be able to carry the load of being a tower. However,
