@@ -12,9 +12,9 @@ For every vertex $v \in V(G)$ we denote by $t_i(v)$ the tower $x$ of color $i$
 that is closest to $v$ in the graph. (If there is a tie between a few
 candidates, we break it by picking the tower of color $i$ with lowest id).
 
-Denote the set $T = union_{i}{T_i}$ of all the towers. We now define a new
+Denote the set $T = \cup_{i}{T_i}$ of all the towers. We now define a new
 directed graph $Q$ with $V(Q) = T$, the set of all towers. For two towers $u, v
-\in V(Q)$, $(u,v) \in E(Q)$ iff $t_i(u) = v$ for some $0 \leq i < k$.
+\in V(Q)$, $(u,v) \in E(Q)$ if and only if $t_i(u) = v$ for some $0 \leq i < k$.
 
 We want to know in which cases $Q$ is a [strongly
 connected](https://en.wikipedia.org/wiki/Strongly_connected_component) or weakly
@@ -26,7 +26,7 @@ whether the connections towers form a connected graph.
 
 Suppose that we are given a large network $G$. Every node is connected directly
 to a few other nodes, and because of the large size of the network, no node can
-percieve the full structure of the network. We want to be able to route
+perceive the full structure of the network. We want to be able to route
 messages in this network between any pair of nodes.
 
 Our method to do this is by choosing a random set of about $\sqrt{n}$ nodes,
@@ -50,7 +50,7 @@ $t_c(x_c) = x_c$.
 
 ![Overlay directed graph of towers]({filename}images/towers_and_nodes.svg)
 > In the picture: The overlay directed graph between the towers (Self edges are
-> ommited). Note that the graph is connected, but not strongly connected. 
+> omitted). Note that the graph is connected, but not strongly connected. 
 > The black small dots represent regular nodes. For example: To route a message
 > from the node $x$ to the node $y$, the message has to pass between various
 > towers along the way.
