@@ -47,7 +47,7 @@ tower node maintains paths to $O(\sqrt{n})$ other towers, and keeps contact
 with $O(\sqrt{n})$ regular nodes around him. In addition, a tower is
 responsible for the communication of $O(\sqrt{n})$ nodes.
 
-Some machines might not be able to carry the load of being a tower. However,
+Some machines might not be able to carry the load for being a tower. However,
 in this experimental protocol specification we ignore this fact, and we
 distribute the task of being a tower evenly between all nodes. This is done by
 choosing the $\sqrt{n}$ towers randomly and changing them every once in a
