@@ -143,13 +143,12 @@ Chosen batch:   111100000111110000011111000001111100000111110
 ```
 
 > A time diagram of batch0 and batch1. `@` and `%` denote the period of the
-> batches. Each batch has a period of 20 minutes, which is drawn as 10 `@` or
-> 10 `%`.
-> * and # denote initial setup in the beginning of each batch period.  Note
-> that whenever a batch is soon ending or during initial setup, the other
-> batch is already operational. 
-> The chosen batch row shows which batch should be used for routing at any
-> specific time. 0 means batch0, 1 means batch1.
+> batches. Each batch has a period of 20 minutes, which is drawn as 10 times
+> `@` or 10 times `%`. `*` and `#` denote initial setup in the beginning of
+> each batch period.  
+> Note that whenever a batch is soon ending or during initial setup, the other
+> batch is already operational.  The chosen batch row shows which batch should
+> be used for routing at any specific time. `0` means batch0, `1` means batch1.
 
 
 Every node maintains two sets of towers: Towers for `batch0` and towers for
@@ -187,31 +186,54 @@ sophisticated protocol. We will not deal with those limitations in this
 protocol.
 
 
-## External API messages
+## Passerby router interface
 
-Possible messages to send to the Passerby router:
+The passerby router is a state machine. It communicates using the following
+messages:
+
+Input messages:
+
+- Initialize (privateKey)
+
+- PortConnected (portId)
+    A new port was connected to the passerby router.
+
+- PortDisconnected (portId)
+    A port was disconnected from the passerby router.
+
+- MsgFromPort(portId, msg)
+    Message was received from a given port.
 
 - SendMessage (remoteNodeIdHash, datagramData)
+    A request to send a message to a remote node id hash.
 
-Possible messages to receive from the Passerby router:
+
+Output messages:
+
+- MsgToPort(portId, msg)
+    A request to send message through port portId.
 
 - MessageReceived (remoteNodeIdHash, datagramData)
+    A remote message was received from remoteNodeIdHash.
+
 
 Node id hashes are of size 120 bits (15 bytes). This allows them to fit into
 IPv6 address space of [private
 addresses](https://en.wikipedia.org/wiki/Unique_local_address) (All ipv6
 addresses that begin with the byte 0xfc).
 
-## Protocol routing messages
+The structure of msg in MsgFromPort and MsgToPort is as follows:
 
-The structure of a message:
-
-- magic
 - messageType
-- length (of payload, in bytes)
 - payload
 
+We rely on a service external to the Passerby router to cut the stream into
+frames of discrete messages.
+
 ## Messages between routing engines
+
+TODO: What to do when a new node joins the network? How to inform him about
+current state in the two concurrent batches?
 
 The Passerby router has direct reliable TCP like connections to various nodes,
 implemented somehow. For any direct connection with a neighboring node, the
