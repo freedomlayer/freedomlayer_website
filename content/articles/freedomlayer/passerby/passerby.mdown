@@ -1,0 +1,725 @@
+Title: The passerby protocol
+Date: 2017-08-02 17:58
+Author: real
+
+# Passerby messaging system
+
+**Work in progress!**
+
+
+## Abstract
+
+Passerby is an experimental datagram routing protocol. We present here the
+ideas of how Passerby protocol works and provide specific details about how to
+implement it.
+
+The main goal of the Passerby protocol is passing encrypted messages between
+nodes in a network with high probability of success.
+
+
+## Core routing algorithm
+
+The Passerby protocol assumes a connected network of nodes. Every node is
+directly connected to a few other nodes in some way. A direct connection could
+be a TCP connection over the internet, a direct wifi connection, a direct
+bluetooth connection or any other type of connection. It is assumed that the
+direct connection two nodes is TCP like: It is reliable and sends messages in
+order.
+
+In order to route messages between nodes in the network, $\sqrt{n}$ random
+nodes are chosen. These nodes are called the "tower" nodes. They make the
+"backbone" of communication. Every tower node is responsible for the
+communication of about $\sqrt{n}$ nodes, and should know at any time short
+paths to all the other $\sqrt{n}$ towers in the network. 
+
+Whenever a node $x$ wants to send a message to some remote node $y$ in the
+network, it sends the message to a close tower, and asks that tower to route
+the message to the remote node. The towers then route the message all the way
+to a tower near $y$. That tower then passes the message to $y$.
+
+![Towers and nodes]({filename}images/towers_and_nodes.svg)
+> In the picture: Towers are marked with colored large dots, and regular nodes
+> are black dots. To pass a message between $x$ and $y$, the message has to
+> be routed through the towers.
+
+In this protocol the towers have to do more work than the regular nodes. All a
+regular node does is to maintain contact with $O(\log_{2}{n})$ towers, while a
+tower node maintains paths to $O(\sqrt{n})$ other towers, and keeps contact
+with $O(\sqrt{n}))$ regular nodes around him. In addition, a tower is
+responsible for the communication of $O(\sqrt{n})$ nodes.
+
+Some machines might not be able to carry the load of being a tower. However,
+in this experimental protocol specification we ignore this fact, and we
+distribute the task of being a tower evenly between all nodes. This is done by
+choosing the $\sqrt{n}$ towers randomly and changing them every once in a
+while.
+
+In a future protocol we might allow a node to choose whether he has the
+capacity of being a tower. Of all those nodes, we will pick a random set of
+$\sqrt{n}$ tower nodes, and compensate them properly somehow.
+
+
+## Towers setup
+
+Given that the network has $n$ nodes, we choose to have $k = \log_{2}{n}$
+different tower colors. At a total of $\sqrt{n}$ towers, this means that we
+will have $\sqrt{n} / \log{2}{n}$ towers of every color.
+
+Every node $v$ maintains paths to the closest tower $t_c(v)$ for $0 \leq c <
+k$. For example, that if $w$ happens to be a tower of color $c$, then $t_c(w) =
+w$. In addition, $v$ registers periodically at $t_c(v)$ for every $0 \leq c <
+k$. This is done by sending a message to $t_c(v)$ that contains a full path to
+$v$. This allows every tower to know paths to all nodes that he is reponsible
+for.
+
+Whenever $v$ wants to send a message to some remote node $u$, $v$ sends the
+message to some close towers of some random colors $t_{c_1}(v), t_{c_2}(v),
+t_{c_3}(v)$. In turn those three towers will try to route the message to a
+tower near the destination node $u$. When a message arrives at a tower near
+$u$, the tower will pass the message to $u$.
+
+We consider an overlay directed graph of all tower nodes. We say that a tower
+node $a$ is connected to a tower node $b$ if if there is some color $0 \leq c <
+k$ such that $t_{c}(a)) = b$. Our experiments show that the overlay directed
+graph of tower nodes is supposed to be weakly connected.  [TODO: Add a link to
+the experiments page.]
+
+Sending a message from a tower node $a$ to a tower node $b = t_{c}(a)$ is done
+as follows: $a$ knows, out of all his immediate neighbors, which one is closest
+to $b$ (There might be more than one). $a$ passes the message to that node.
+That node also knows, out of all his immediate neighbors which one is closest
+to $b$.  This process continues until the message arrives at $b$.
+
+Sending a message from $b = t_{c}(a)$ to $a$ is done as follows: $a$ is
+registered at the tower $b$. Therefore $b$ knows a path of nodes to $a$. $b$
+creates a message that contains this path, and sends it to the first node
+in the path. Every node that receives this message will look at the path and
+keep sending the message to the next node in the path, until it arrives at $a$.
+
+This means that for every two connected towers $a$ and $b$, it is possible to
+pass messages in both directions. We can $a$ and $b$ neighboring towers. This
+relation is symmetric. $a$ is a neighboring tower of $b$, and $b$ is a
+neighboring tower of $a$.
+
+Every tower $a$ sends periodically a message to all his neighboring towers. This
+message propagates in the overlay network of towers, allowing every tower to
+know a short overlay path to the tower $a$.
+
+
+## Measuring the network size
+
+In order to have close to $\sqrt{n}$ towers, we need a way to approximate the amount of
+nodes in the network. This could be done using the min hash method. We use a
+few different random hash functions and hash the ids of all the nodes in the
+network. We then get the minimum values of all the hashes of node ids, and
+conclude an approximation for the amount of nodes in the network. You can read
+more about it here. [TODO: Add a link to the freedomlayer paper about this]
+
+Note that this method of approximating the size of the network is not resilient
+against adversaries. An adversary can enter the network with many crafted node
+ids and distort the result of this approximation process.
+
+
+## Smooth transitions
+
+The set of chosen towers change over time. In addition, we continuously
+approximate the amount of nodes in the network using the min hash method. If we
+change the choice of towers or our approximation of the network size abruptly
+we should expect interruption to the routing in the network.
+
+To avoid this problem, we use a method of smooth transition for the
+approximation of the network size and the choice of tower node. We use two
+independent batches: Each of them have a period of `20` minutes. When `batch0`
+begins, `batch1` is in the middle of its execution, and when `batch1` begins,
+`batch0` is in the middle of its execution.
+
+```
+                            ---------> time
+
+batch0:         @@@@@@@@@@%%%%%%%%%%@@@@@@@@@@%%%%%%%%%%@@@@@
+                *#        *#        *#        *#        *#
+batch1:         %%%%%@@@@@@@@@@%%%%%%%%%%@@@@@@@@@@%%%%%%%%%%
+                     *#        *#        *#        *#
+Chosen batch:   111100000111110000011111000001111100000111110
+```
+
+> A time diagram of batch0 and batch1. `@` and `%` denote the period of the
+> batches. Each batch has a period of 20 minutes, which is drawn as 10 `@` or
+> 10 `%`.
+> * and # denote initial setup in the beginning of each batch period.  Note
+> that whenever a batch is soon ending or during initial setup, the other
+> batch is already operational. 
+> The chosen batch row shows which batch should be used for routing at any
+> specific time. 0 means batch0, 1 means batch1.
+
+
+Every node maintains two sets of towers: Towers for `batch0` and towers for
+`batch1`. A node decides which set of towers to use according to the current
+time. This means that we rely on the current time for synchronization. This is
+not a very secure method of synchronization, but we use it here for simplicity.
+
+The initial setup at the beginning of every period consists of the following:
+
+- Approximating the amount of nodes in the network. We allocate 2 minutes for
+    this part.
+
+- Changing the set of random towers. Finding all closest towers and registration. 
+    We allocate 3 minutes for this part.
+
+The first part tries to achieve some kind of synchronization: We want all nodes
+in the network to have the same opinion about the approximation of the
+network's size. This method is not resilient against strong adversaries that
+try to disrupt this synchronization process.
+
+
+## Summary of main limitations
+
+- Time on the nodes' machines as means for synchronization.
+
+- Nodes can pick their own ids. This allows an adversary to distort
+    the approximation of the amount of nodes in the network, or to generate
+    nodes that will be towers.
+
+- Every node might become a tower, although some machines will not have the
+    networking or computational capabilities of being a tower.
+
+These limitations can be addressed by the introduction of a supernode in a more
+sophisticated protocol. We will not deal with those limitations in this
+protocol.
+
+
+## External API messages
+
+Possible messages to send to the Passerby router:
+
+- SendMessage (remoteNodeIdHash, datagramData)
+
+Possible messages to receive from the Passerby router:
+
+- MessageReceived (remoteNodeIdHash, datagramData)
+
+Node id hashes are of size 120 bits (15 bytes). This allows them to fit into
+IPv6 address space of [private
+addresses](https://en.wikipedia.org/wiki/Unique_local_address) (All ipv6
+addresses that begin with the byte 0xfc).
+
+## Protocol routing messages
+
+The structure of a message:
+
+- magic
+- messageType
+- length (of payload, in bytes)
+- payload
+
+## Messages between routing engines
+
+The Passerby router has direct reliable TCP like connections to various nodes,
+implemented somehow. For any direct connection with a neighboring node, the
+following messages can be transferred:
+
+- **LowestNodes**(nodeList)
+  nodeList is a list with elements of the form:
+  (heightIndex, nodeId, timestamp, sign{nodeId}(timestamp))
+  This message is sent periodically between neighboring nodes. The lowest node
+  ids are used to approximate the amount of nodes in the network.
+
+- **LowestNodesPinned**(batchStartTime, nodeList)
+  nodeList is a list with elements of the form:
+  (heightIndex, nodeId, timestamp, sign{nodeId}(timestamp))
+  This message is sent during `NET_APPROX_TIME` time period between nodes.
+  batchStartTime is the start time of the batch for which those pinned lowest
+  nodes belong to.
+
+- **UpdatedLocalTowerPath**(towerColor, SignedPathFromTower)
+  Used both for new choice of a local tower, or changes in the network
+  layout. This message is sent periodically, originating from tower nodes 
+
+  ```
+  localTower,   timestamp                  
+  a_1,          sign{localTower}(a_1, prev)
+  a_2,          sign{a_1}(a_2, prev)       
+  \cdots                                   
+  a_k,          sign{a_{k-1}}(a_k, prev)
+  ```
+
+- **RegisterLocalTower**(towerColor, SignedPathToTower)
+  A node registers with a local tower.
+  ```
+  nodeId,       timestamp              
+  a_1,          sign{nodeId}(a_1, prev)
+  a_2,          sign{a_1}(a_2, prev)   
+  \cdots                               
+  localTower,   sign{a_{k-1}}(localTower, prev)
+  ```
+  The local tower will keep knowledge of paths to all nodes in the given
+  chain of signatures.
+
+- **MsgByTowerColor**(towerColor, senderNodeId, signedContent)
+  Where signedContent is of the form:
+    - timestamp
+    - nonce
+    - msgType
+    - payload
+    - signature: Sign{key=senderNodeId}(all message)
+  This message allows to send content to a local colored tower.
+
+- **MsgByPath**(nodeIdPath, senderNodeId, signedContent)
+  Where nodeIdPath is a path of nodeIds.
+  This message allows to send content to a remote node using a path of nodeIds.
+
+## Messages between nodes and towers
+
+- MsgByTowerColor( **SendMessageLocalTower**(destNodeId, encContent) ) 
+  Send a message with given content to a destination id.
+  originates at some node and arrives at a local tower.
+
+- MsgByPath( **MessageReceivedLocalTower**(encContent) )
+  A message received through the local tower with given content.
+  This message originates at a local tower and arrives at the relevant node.
+
+The structure for `encContent` in MessageReceivedLocalTower is as follows:
+- senderPublicKey (senderNodeId)
+- encSymmetricKey == Encrypt{key=senderPrivateKey}(symmetricKey)
+- encDatagramData == Encrypt{key=symmetricKey, nonce=random}(timestamp, datagramData)
+
+
+## Messages between towers
+
+The towers are the mechanism used for long range routing of messages.
+Each tower should know the location of all other towers, to be able to route
+messages quickly between towers.
+
+- MsgByPath( **UpdatedTowerPath**(originTowerColor, originTowerId, SignedPathFromTower))
+  A message that is sent periodically from originTowerId. This message allows
+  all towers in the network to know a path to originTowerId.
+  This message is propagated using paths of registered nodes (Some tower node
+  sends a local tower a RegisterLocalTower message)
+
+- MsgByTowerColor( **MsgTower**(destTowerNodeId, srcTowerNodeId, signedContent) )
+  Send a message between any two towers. This message is passed between towers
+  until it arrives at the destination tower.
+
+- MsgByTowerColor(MsgTower( 
+    **StoreLookupId**(srcTowerNodeId, SignedPathFromNode) ))
+  Store ownership of nodeId in a tower. Allows for lookup later.
+  SignedPathFromNode is a proof that the node nodeId has registered recently
+  with the srcTowerNodeId tower.
+
+- MsgByTowerColor(MsgTower( 
+    **LookupIdRequest**(requesterTowerId, nodeId) ))
+  Find out which tower is responsible for the node nodeId.
+
+- MsgByTowerColor(MsgTower(
+    **LookupIdResponse**(nodeId, towerList of towerId) ))
+  Respond with the list of towers that have responsibility for nodeId.
+
+- MsgByTowerColor(MsgTower(
+    **RouteMessage**(destNodeId, encContent) ))
+  Route a message between towers until it arrives at destTowerId.
+  (Then the receiving tower will send a MessageReceivedLocalTower to destNodeId)
+
+## Protocol constants
+
+- `SYM_KEY_CACHE_TIME = 30 minutes`: maximum amount of time an entry could be
+  kept in symKeyMap cache.
+
+- `MESSAGE_CACHE_TIME = 1 minute`: the maximum amount of time an entry could
+  be kept in the messageCacheMap cache.
+
+- `LOCAL_TOWER_EXPIRY = 1 minute`: The time it takes for knowledge of local
+  tower to expire.
+
+- `TOWER_ODD_BITS = 15`: The odds for a node to be a tower of a specific color
+  are 2^(-TOWER_ODD_BITS).
+
+- `NUM_COLORS = 32`: Amount of colors available for towers.
+
+- `TOWER_TIME_BLOCK = 15 minutes`: Every
+  such period towers of some color are replaced.
+
+
+- `BATCH_TIME = 60 minutes`: Every such period of time
+  a batch of network size approximation passes.
+
+- `NET_APPROX_TIME = 5 minutes`: Time to approximate the amount of nodes in
+  the network.
+
+- `TOWER_CONVERGE_TIME = 10 minutes`: Time for convergence of towers
+  information.
+
+- `NUM_HEIGHT_FUNCS = 40`: Amount of random functions from nodeId into [0,1]
+
+
+## Batch functions
+
+```rust
+Get the batchIndex of the current batch used for routing:
+TODO: Check that this is still working:
+routingBatchIndex(time) := (time / (BATCH_TIME / 2)) % 2
+
+loadingBatchIndex(time) := 1 - routingBatchIndex(time)
+```
+
+## The towers selection functions
+
+We assume that every node in the network has access to the current time in UTC
+form. Given the current time (in seconds since epoch), `time`, we define:
+
+```rust
+tcolor(color, time) := ((time / TOWER_TIME_BLOCK) + color) / NUM_COLORS
+```
+
+Where `0 <= color < NUM_COLORS`.
+
+For every passage of `TOWER_TIME_BLOCK`, the tcolor of only one color changes. In other
+words, given some time `t_0` there is some color `c_0` such that `tcolor(c_0,t_0) +
+1 = tcolor(c_0, t_0 + TOWER_TIME_BLOCK)`, and for every `c != c_0` we get that
+`tcolor(c,t_0) = tcolor(c, t_0 + TOWER_TIME_BLOCK)`.
+
+Next we define:
+
+```rust
+h(color, time) := sha256("AA" || tcolor(color, time) ||
+                            "BB" || color)
+
+isTower(nodeId, batchIndex, color, time) := sha256("CC" |  
+                    h(color, time) || "DD" || sha256(nodeId) ||
+                    "EE" || batchIndex) < 2^(256 - TOWER_ODDS_BITS)
+```
+
+During time `time`, a node `nodeId` is a tower of color `c` if `isTower(nodeId,
+color, time)` is true.
+
+
+## Network approximation functions
+
+During the approximation of the network size we find the "height" of every node
+in the network. There are `NUM_HEIGHT_FUNCS` random hash functions. We calculate
+them as follows:
+
+```rust
+nodeHeight(heightIndex, nodeId) = (1 / num(sha256("FF" || heightIndex || 
+                                    "EE" || sha256(nodeId)))) - 1
+```
+
+Using the height of the "lowest" nodes in the network we calculate an
+approximation to the amount of nodes in the network.
+
+```rust
+approxNumNodes(heights) := harmonicMean(heights)
+```
+
+See also:
+[demofox's blog](https://blog.demofox.org/2015/02/03/
+estimating-counts-of-distinct-values-with-kmv/)
+[sketch the day hyperloglog](https://research.neustar.biz/2012/10/25/
+sketch-of-the-day-hyperloglog-cornerstone-of-a-big-data-infrastructure/)
+
+
+## Maintained data structures for every node
+
+Every node should keep the following:
+
+- lowestNodes[heightIndex] = (nodeId, timestamp, signature)
+  A lowest known node for every index. These will be used for approximating the
+  amount of nodes in the network.
+
+
+Cache for receiving encrypted messages:
+
+- symKeyMap[senderNodeId] == (encSymmetricKey, symmetricKey) 
+  With `SYM_KEY_CACHE_TIME`, maximum amount of time an entry could be kept in
+  symKeyMap cache.
+
+
+Cache for message replay:
+
+- messageCacheMap[encMsgHash] == timestamp
+  With `MESSAGE_CACHE_TIME`, the maximum amount of time an entry could be kept in
+  the messageCacheMap cache.
+
+
+The following information is kept inside the structure batch[batchIndex]:
+
+Information about network size approximation:
+
+- lowestNodesPinned[heightIndex]
+  A lowest known node for every index. May only be changed during the net
+  approx time frame of the relevant batch.
+
+- numNodesApprox
+  An approximation for the amount of nodes in the network. Calculated from
+  lowestNodes, after the net approx time frame has ended.
+
+Information about local towers (Closest for each color):
+
+- localTower[color].distance
+  Shortest known distance to this local tower.
+
+- localTower[color].gateways 
+  A list of neighboring nodes: (nodeId, timestamp)
+
+- localTower[color].towerNodeId: 
+  The nodeId of the local tower.
+
+
+Nodes that are towers also maintain the following for every batch:
+
+- For every registered node:
+    - registered[nodeId].registrationTime 
+    Time of registration
+
+    - registered[nodeId].signedPath
+    Signed path to registered node.
+
+- For every tower (nodeId):
+    - tower[nodeId].color
+    The color of the remote tower.
+
+    - tower[nodeId].distance
+    Distance to remote tower. This is the length of the shortest path known to
+    the remote tower.
+
+    - tower[nodeId].colorGateways 
+    Gateways to remote tower. Each gateway is a color of a local tower.
+
+
+## Division of time in a single batch
+
+For the operation of this protocol we assume some ability to synchronize time
+between nodes. Note that this assumption is generally not valid for a strong
+adversary. We assume that all nodes have a similar clock: the global UTC time. 
+
+We choose the amount of towers based on an approximation of the amount of nodes
+in the network. To avoid routing disruptions whenever a new approximation is
+calculated, we perform the network size approximation in batches. At every
+moment every node is taking part in two batches that run simultaneously (in
+different stages), to make sure that routing is always operational.
+
+A batch runs for `BATCH_TIME` minutes. It is divided to the following parts:
+
+
+```
+|---- NET_APPROX_TIME ----|-- TOWER_CONVERGENCE_TIME --|-- operational routing --|
+```
+
+If we denote by `=` the `NET_APPROX_TIME` period, by `*` the
+`TOWER_CONVERGENCE_TIME` period and by `=` the "operational routing" period, we
+should get a time diagram as follows for the two batches:
+
+```
+                    ---[time]--->
+
+batch0:    ... =@****=@****=@****=@****=@**** ...
+batch1: ... =@****=@****=@****=@****=@**** ...
+
+```
+
+Note that all times there is at least one batch in operational routing mode.
+In addition, during the transitions between batches, the old batch is still in
+operational routing mode.
+
+The time period marked with `NET_APPROX_TIME` is the time where the network
+size is approximated. In the beginning of this period, every node keeps a
+snapshot of lowestNodes as lowestNodesPinned for the relevant batchIndex, and
+then sends it to all of his neighbors. If a node encounters a better candidate
+for lowestNodesPinned, he updates it and notifies his neighbors. 
+
+In the end of `NET_APPROX_TIME` time period, lowestNodesPinned can not be
+changed anymore. Hopefully it will be the same for all the nodes in the
+network. `lowestNodesPinned` is then used to calculate `numNodesApprox`
+is an approximation to the amount of nodes in the network. This is done by
+applying the function `approxNumNodes`.
+
+During `TOWER_CONVERGENCE_TIME`, nodes send each other the messages:
+UpdatedLocalTowerPath and RegisterLocalTower. Nodes that are towers send
+UpdatedTowerPath and StoreLookupId to each other. 
+
+No user datagrams may be sent or received on this batch during the
+`NET_APPROX_TIME` and `TOWER_CONVERGENCE_TIME` periods. 
+
+During the "operational routing" period, this batch becomes usable for routing
+and user datagrams may be routed.
+
+
+## Algorithm for every node
+
+The following represents an algorithm of operation for a node with node id
+myNodeId.
+
+
+### Receipt of external SendMessage (remoteId, datagramData):
+```rust
+- Use the current "operational routing" batch.
+- Pick a set of three random tower colors: rcolors.
+- for towerColor in rcolors:
+    - Send a SendMessageLocalTower(towerColor, remoteId, datagramData) to a
+      random gateway from the set localTower[towerColor].gateways.
+```
+
+### Receipt of LowestNodes(nodeList):
+
+```rust
+- updatedIndices = {}
+- for (heightIndex, nodeId, timestamp, signature) in nodeList:
+    - if signature is not a valid signature of timestamp by nodeId:
+    -   continue
+    - oldHeight <-- nodeHeight(heightIndex, lowestNodes[heightIndex])
+    - newHeight <-- nodeHeight(heightIndex, nodeId)
+    - if (newHeight, nodeId) < (oldHeight, lowestNodes[heightIndex]):
+        - lowestNodes[heightIndex] <-- (nodeId, timestamp, signature)
+        - updatedIndices.insert(heightIndex)
+
+- for neighbor in neighbors:
+    - Send LowestNodes((i, lowestNodes[i]) for i in updatedIndices) to neighbor
+```
+
+### Receipt of LowestNodesPinned(batchStartTime, nodeList):
+
+```rust
+```
+
+TODO
+
+
+### Receipt of SendMessageLocalTower(towerColor, destNodeId, encContent):
+
+```rust
+- use the current "operational routing" batch.
+- if localTower[towerColor].towerNodeId != myNodeId:
+    - gatewayId, timestamp  <-- Sample randomly from 
+        localTower[towerColor].gateways
+    - Send SendMessageLocalTower(towerColor, destNodeId, encContent) to the
+      neighbor gatewayId.
+    - return
+
+// Here if we are a tower:
+
+- Send LookupIdRequest(towerColor, myNodeId, destNodeId)
+- Wait for 
+    LookupIdResponse(requesterTowerColor, requesterTowerId, nodeId, towerList)
+  with  requesterTowerColor == towerColor &&
+        requesterTowerId == myNodeId &&
+        nodeId == destNodeId
+
+- (rTowerColor, rTowerId) <-- Sample randomly from towerList
+- colorGateway <-- sample randomly from tower[rTowerId].colorGateways
+- gateway <-- sample randomly from localTower[colorGateway].gateways
+- Send RouteMessage(colorGateway, rTowerColor, rTowerId, 
+       destNodeId, encContent) to gateway
+```
+
+### Receipt of MessageReceivedLocalTower(nodeIdPath, encContent):
+
+```rust
+- if nodeIdPath != []
+    - nextNode <-- nodeIdPath[-1]
+    - Send a MessageReceivedLocalTower(nodeIdPath[:-1], encContent) to the
+      node nextNode.
+    - return
+
+- encMsgHash <-- sha256(encContent)
+- if encMsgHash in messageCacheMap:
+    - return
+
+- symmetricKey <-- Decrypt{key=senderPublicKey}(encSymmetricKey)
+- if encContent.senderPublicKey not in symKeyMap
+    - symKeyMap[encContent.senderPublicKey] <--
+             (encContent.encSymmetricKey, symmetricKey)
+
+- if encContent.encSymmetricKey != symKeyMap[encContent.senderPublicKey].encSymmetricKey:
+    - symKeyMap[encContent.senderPublicKey] <--
+        (encContent.encSymmetricKey, symmetricKey)
+
+- timestamp, datagramData <-- Decrypt{key=symmetricKey}(encContent.encDatagramData)
+- if Decrypt failed, return.
+
+- if curTime - timestamp > `MESSAGE_CACHE_TIME`, return
+
+- messageCacheMap[encMsgHash] <-- timestamp
+
+- Send external MessageReceived(senderPublicKey, datagramData)
+```
+
+
+### Receipt of UpdatedLocalTowerPath(towerColor, SignedPathFromTower):
+
+```rust
+- if curTime - SignedPathFromTower.timestamp > `LOCAL_TOWER_EXPIRY`
+    - return
+
+- Check all signatures. If any signature is invalid, return.
+- Verify that the last signature signs over myNodeId. Otherwise, return.
+
+- distance      <-- length of path.
+- gateway       <-- last nodeId on chain before myNodeId.
+- towerNodeId   <-- first nodeId on the path.
+- timestamp     <-- path timestamp.
+
+- if not isTower(towerNodeId, color, curTime):
+    - return
+
+- Remove gateways from `localTower[towerColor].gateways` that are older than
+  `LOCAL_TOWER_EXPIRY`.
+
+- if len(localTower[towerColor].gateways) == 0:
+    - localTower[towerColor] <-- None
+
+- if localTower[TowerColor] is None:
+    - localTower[towerColor].distance       <-- distance
+    - localTower[towerColor].gateways       <-- set{(gateway, timestamp)}
+    - localTower[towerColor].towerNodeId    <-- towerNodeId
+
+    - for neighborId in neighbors:
+        - send UpdatedLocalTowerPath(towerColor, SignedPathFromTower
+            + (neighborId, sign{myNodeId}(neighborId, prev)) )
+    - return
+
+- if distance > localTower[towerColor].distance:
+    - return
+
+- if distance < localTower[towerColor].distance:
+    - localTower[towerColor].distance       <-- distance
+    - localTower[towerColor].gateways       <-- set{(gateway, timestamp)}
+    - localTower[towerColor].towerNodeId    <-- towerNodeId
+
+    - for neighborId in neighbors:
+        - send UpdatedLocalTowerPath(towerColor, SignedPathFromTower
+            + (neighborId, sign{myNodeId}(neighborId, prev)) )
+    - return
+
+- if distance == localTower[towerColor].distance:
+    - localTower[towerColor].gateways.insert((gateway, timestamp))
+    - for neighborId in neighbors:
+        - send UpdatedLocalTowerPath(towerColor, SignedPathFromTower
+            + (neighborId, sign{myNodeId}(neighborId, prev)) )
+    - return
+```
+
+
+### Receipt of RegisterLocalTower(towerColor, SignedPathToTower):
+
+TODO
+
+
+## TODO area:
+
+TODO: Start with messages between routing engines.
+Explain what to do when a message is received.
+
+Explain any periodic behaviour, related to time, like registration.
+
+If a longer path of registration passes through a node, the node will delay his
+next registration message, hoping that the same large message will pass again.
+This is done to save bandwidth.
+
+
+TODO: **probes**: Add a mechanism to make sure that towers actually pass messages. Every
+node should sometimes send probes: Marked messages (Encrypted) sent through
+various towers. He then gets acks for those messages. This way a node can know
+which towers are the most reliable, and he will use mostly those towers. Towers
+that don't pass messages will get less and less messages.
+
+How to design the probe messages?
+
