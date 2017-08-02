@@ -155,7 +155,7 @@ Finally, we create a directed overlay graph of the towers and check its
 connectivity. We check two types of connectivity for the overlay graph: weak
 connectivity and strong connectivity. Weak connectivity is checked using
 [dfs](https://en.wikipedia.org/wiki/Depth-first_search), and strong
-connectivity is checked usign [kosaraju
+connectivity is checked using [kosaraju
 algorithm](https://en.wikipedia.org/wiki/Kosaraju%27s_algorithm) for finding
 strongly connected components. Both of those algorithms were taken from the
 [petgraph](https://github.com/bluss/petgraph) rust crate.
