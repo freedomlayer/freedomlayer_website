@@ -33,6 +33,7 @@ DISPLAY_PAGES_ON_MENU = False
 DISPLAY_CATEGORIES_ON_MENU = False
 MENUITEMS = (\
         ('Research','/pages/research.html'),\
+        ('Passerby','/pages/passerby.html'),\
         ('About','/pages/about.html'),\
         )
 
