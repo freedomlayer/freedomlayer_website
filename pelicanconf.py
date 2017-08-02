@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 PLUGIN_PATHS = ['/home/real/projects/websites/pelican_generic/plugins/pelican-plugins']
-PLUGINS = ['render_math','tipue_search']
+PLUGINS = ['render_math','tipue_search','simple_footnotes']
 
 THEME = 'freedomlayer_theme'
 
