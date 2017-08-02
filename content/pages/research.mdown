@@ -69,6 +69,9 @@ efficient Internet. We collect here articles about the subject.
 -   [Approximating the size of a mesh network](
     {filename}/articles/freedomlayer/approximate_net_size/approximate_net_size.mdown)
 
+-   [The connectivity of sqrt(n) towers](
+    {filename}/articles/freedomlayer/connectivity_towers/connectivity_towers.mdown)
+
 
 
 ### Distributed Banking
