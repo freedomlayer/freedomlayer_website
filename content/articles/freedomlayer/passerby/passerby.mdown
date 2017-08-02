@@ -2,7 +2,6 @@ Title: The passerby protocol
 Date: 2017-08-02 17:58
 Author: real
 
-# Passerby messaging system
 
 **Work in progress!**
 
@@ -81,8 +80,8 @@ $u$, the tower will pass the message to $u$.
 We consider an overlay directed graph of all tower nodes. We say that a tower
 node $a$ is connected to a tower node $b$ if if there is some color $0 \leq c <
 k$ such that $t_{c}(a)) = b$. Our experiments show that the overlay directed
-graph of tower nodes is supposed to be weakly connected.  [TODO: Add a link to
-the experiments page.]
+graph of tower nodes [is supposed to be weakly connected](
+{filename}/articles/freedomlayer/connectivity_towers/connectivity_towers.mdown).
 
 Sending a message from a tower node $a$ to a tower node $b = t_{c}(a)$ is done
 as follows: $a$ knows, out of all his immediate neighbors, which one is closest
@@ -112,8 +111,8 @@ In order to have close to $\sqrt{n}$ towers, we need a way to approximate the am
 nodes in the network. This could be done using the min hash method. We use a
 few different random hash functions and hash the ids of all the nodes in the
 network. We then get the minimum values of all the hashes of node ids, and
-conclude an approximation for the amount of nodes in the network. You can read
-more about it here. [TODO: Add a link to the freedomlayer paper about this]
+calculate an [approximation for the amount of nodes in the
+network]({filename}/articles/freedomlayer/approximate_net_size/approximate_net_size.mdown).
 
 Note that this method of approximating the size of the network is not resilient
 against adversaries. An adversary can enter the network with many crafted node
