@@ -1,0 +1,8 @@
+Title: Passerby
+Date: 2017-08-02 17:55
+Author: real
+
+The passerby project is an experimental protocol for routing datagrams in a mesh
+network. It is a work in progress.
+
+[Current whitepaper (Not done)]({filename}/articles/freedomlayer/passerby/passerby.mdown)
