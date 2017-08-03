@@ -145,7 +145,7 @@ Chosen batch:   111100000111110000011111000001111100000111110
 > A time diagram of batch0 and batch1. `@` and `%` denote the period of the
 > batches. Each batch has a period of 20 minutes, which is drawn as 10 times
 > `@` or 10 times `%`. `*` and `#` denote initial setup in the beginning of
-> each batch period.  
+> each batch period.
 > Note that whenever a batch is soon ending or during initial setup, the other
 > batch is already operational.  The chosen batch row shows which batch should
 > be used for routing at any specific time. `0` means batch0, `1` means batch1.
@@ -193,7 +193,11 @@ messages:
 
 Input messages:
 
-- **Initialize(privateKey)**
+- **Initialize(privateKey, currentTime)**
+    Initialize the state machine.
+
+- **TimeTick(currentTime)**
+    Information about the current time.
 
 - **PortConnected(neighborIdHash)**
     A new port was connected to the passerby router.
@@ -217,7 +221,7 @@ Output messages:
     A remote message was received from remoteNodeIdHash.
 
 
-Node id hashes are of size 120 bits (15 bytes). This allows them to fit into
+Node id hashes are of size $120$ bits ($15$ bytes). This allows them to fit into
 IPv6 address space of [private
 addresses](https://en.wikipedia.org/wiki/Unique_local_address) (All ipv6
 addresses that begin with the byte 0xfc).
@@ -235,26 +239,23 @@ into frames of discrete messages.
 TODO: What to do when a new node joins the network? How to inform him about
 current state in the two concurrent batches?
 
-The Passerby router has direct reliable TCP like connections to various nodes,
-implemented somehow. For any direct connection with a neighboring node, the
+For any direct connection with a neighboring node, the
 following messages can be transferred:
 
-- **LowestNodes**(nodeList)
+- **LowestNodes**(nodeList) [L0]
   nodeList is a list with elements of the form:
   (heightIndex, nodeId, timestamp, sign{nodeId}(timestamp))
   This message is sent periodically between neighboring nodes. The lowest node
   ids are used to approximate the amount of nodes in the network.
 
-- **LowestNodesPinned**(batchStartTime, nodeList)
+- **LowestNodesPinned**(batchIndex, nodeList) [L0]
   nodeList is a list with elements of the form:
   (heightIndex, nodeId, timestamp, sign{nodeId}(timestamp))
-  This message is sent during `NET_APPROX_TIME` time period between nodes.
-  batchStartTime is the start time of the batch for which those pinned lowest
-  nodes belong to.
+  batchIndex is the index of the batch this pinned lowest nodes set refers to.
 
-- **UpdatedLocalTowerPath**(towerColor, SignedPathFromTower)
+- **UpdatedLocalTowerPath**(batchIndex, towerColor, SignedPathFromTower) [L0]
   Used both for new choice of a local tower, or changes in the network
-  layout. This message is sent periodically, originating from tower nodes 
+  layout. This message is sent periodically, originating from tower nodes.
 
   ```
   localTower,   timestamp                  
@@ -264,7 +265,7 @@ following messages can be transferred:
   a_k,          sign{a_{k-1}}(a_k, prev)
   ```
 
-- **RegisterLocalTower**(towerColor, SignedPathToTower)
+- **RegisterLocalTower**(batchIndex, towerColor, SignedPathToTower) [L0]
   A node registers with a local tower.
   ```
   nodeId,       timestamp              
@@ -276,26 +277,30 @@ following messages can be transferred:
   The local tower will keep knowledge of paths to all nodes in the given
   chain of signatures.
 
-- **MsgByTowerColor**(towerColor, senderNodeId, signedContent)
-  Where signedContent is of the form:
-    - timestamp
-    - nonce
-    - msgType
-    - payload
-    - signature: Sign{key=senderNodeId}(all message)
+- **MsgByTowerColor**(batchIndex, towerColor, senderNodeId, signedContent) [L0]
   This message allows to send content to a local colored tower.
 
-- **MsgByPath**(nodeIdPath, senderNodeId, signedContent)
+- **MsgByPath**(batchIndex, nodeIdPath, senderNodeId, signedContent) [L0]
   Where nodeIdPath is a path of nodeIds.
   This message allows to send content to a remote node using a path of nodeIds.
 
+signedContent is of the form:
+
+- timestamp
+- nonce
+- msgType
+- payload
+- signature: Sign{key=senderNodeId}(all message)
+
 ## Messages between nodes and towers
 
-- MsgByTowerColor( **SendMessageLocalTower**(destNodeId, encContent) ) 
+- **SendMessageLocalTower**(destNodeId, encContent) [L1]
+  Sent over MsgByTowerColor
   Send a message with given content to a destination id.
   originates at some node and arrives at a local tower.
 
-- MsgByPath( **MessageReceivedLocalTower**(encContent) )
+- **MessageReceivedLocalTower**(encContent) [L1]
+  Sent over MsgByPath
   A message received through the local tower with given content.
   This message originates at a local tower and arrives at the relevant node.
 
@@ -311,32 +316,34 @@ The towers are the mechanism used for long range routing of messages.
 Each tower should know the location of all other towers, to be able to route
 messages quickly between towers.
 
-- MsgByPath( **UpdatedTowerPath**(originTowerColor, originTowerId, SignedPathFromTower))
+- **UpdatedTowerPath**(originTowerId, SignedPathFromTower)) [L1]
+  Sent over MsgByPath or MsgByTowerColor
   A message that is sent periodically from originTowerId. This message allows
   all towers in the network to know a path to originTowerId.
   This message is propagated using paths of registered nodes (Some tower node
   sends a local tower a RegisterLocalTower message)
 
-- MsgByTowerColor( **MsgTower**(destTowerNodeId, srcTowerNodeId, signedContent) )
+- **MsgTower**(destTowerNodeId, srcTowerNodeId, signedContent) [L1]
+  Sent over MsgByPath or MsgByTowerColor
   Send a message between any two towers. This message is passed between towers
   until it arrives at the destination tower.
 
-- MsgByTowerColor(MsgTower( 
-    **StoreLookupId**(srcTowerNodeId, SignedPathFromNode) ))
+- **StoreLookupId**(srcTowerNodeId, SignedPathFromNode) [L2]
+  Sent over MsgTower
   Store ownership of nodeId in a tower. Allows for lookup later.
   SignedPathFromNode is a proof that the node nodeId has registered recently
   with the srcTowerNodeId tower.
 
-- MsgByTowerColor(MsgTower( 
-    **LookupIdRequest**(requesterTowerId, nodeId) ))
+- **LookupIdRequest**(requesterTowerId, nodeId) [L2]
+  Sent over MsgTower
   Find out which tower is responsible for the node nodeId.
 
-- MsgByTowerColor(MsgTower(
-    **LookupIdResponse**(nodeId, towerList of towerId) ))
+- **LookupIdResponse**(nodeId, towerList of towerId) [L2]
+  Sent over MsgTower
   Respond with the list of towers that have responsibility for nodeId.
 
-- MsgByTowerColor(MsgTower(
-    **RouteMessage**(destNodeId, encContent) ))
+- **RouteMessage**(destNodeId, encContent) [L2]
+  Sent over MsgTower
   Route a message between towers until it arrives at destTowerId.
   (Then the receiving tower will send a MessageReceivedLocalTower to destNodeId)
 
@@ -354,19 +361,13 @@ messages quickly between towers.
 - `TOWER_ODD_BITS = 15`: The odds for a node to be a tower of a specific color
   are 2^(-TOWER_ODD_BITS).
 
-- `NUM_COLORS = 32`: Amount of colors available for towers.
-
-- `TOWER_TIME_BLOCK = 15 minutes`: Every
-  such period towers of some color are replaced.
-
-
-- `BATCH_TIME = 60 minutes`: Every such period of time
+- `BATCH_TIME = 20 minutes`: Every such period of time
   a batch of network size approximation passes.
 
-- `NET_APPROX_TIME = 5 minutes`: Time to approximate the amount of nodes in
+- `NET_APPROX_TIME = 2 minutes`: Time to approximate the amount of nodes in
   the network.
 
-- `TOWER_CONVERGE_TIME = 10 minutes`: Time for convergence of towers
+- `TOWER_CONVERGE_TIME = 3 minutes`: Time for convergence of towers
   information.
 
 - `NUM_HEIGHT_FUNCS = 40`: Amount of random functions from nodeId into [0,1]
@@ -374,46 +375,34 @@ messages quickly between towers.
 
 ## Batch functions
 
-```rust
-Get the batchIndex of the current batch used for routing:
-TODO: Check that this is still working:
-routingBatchIndex(time) := (time / (BATCH_TIME / 2)) % 2
+Get the current opreation batch index (The batch that is ready for routing):
 
-loadingBatchIndex(time) := 1 - routingBatchIndex(time)
-```
+$chosenBatch(time) := \lfloor\frac{time + 12}{10}\rfloor \mod 2$
 
-## The towers selection functions
+The amount of time that has passed inside the period of a specific batch: 
 
-We assume that every node in the network has access to the current time in UTC
-form. Given the current time (in seconds since epoch), `time`, we define:
+$batch0Time(time) := time \mod 20$
 
-```rust
-tcolor(color, time) := ((time / TOWER_TIME_BLOCK) + color) / NUM_COLORS
-```
+$batch1Time(time) := (time + 10) \mod 20$
 
-Where `0 <= color < NUM_COLORS`.
+The current state of a batch:
 
-For every passage of `TOWER_TIME_BLOCK`, the tcolor of only one color changes. In other
-words, given some time `t_0` there is some color `c_0` such that `tcolor(c_0,t_0) +
-1 = tcolor(c_0, t_0 + TOWER_TIME_BLOCK)`, and for every `c != c_0` we get that
-`tcolor(c,t_0) = tcolor(c, t_0 + TOWER_TIME_BLOCK)`.
-
-Next we define:
-
-```rust
-h(color, time) := sha256("AA" || tcolor(color, time) ||
-                            "BB" || color)
-
-isTower(nodeId, batchIndex, color, time) := sha256("CC" |  
-                    h(color, time) || "DD" || sha256(nodeId) ||
-                    "EE" || batchIndex) < 2^(256 - TOWER_ODDS_BITS)
-```
-
-During time `time`, a node `nodeId` is a tower of color `c` if `isTower(nodeId,
-color, time)` is true.
-
+$$
+batchState(batchTime) := 
+    \begin{cases}
+        0, & \text{if}\ 0 \leq batchTime < 2 \\
+        1, & \text{if}\ 2 \leq batchTime < 5 \\
+        2, & \text{if}\ 5 \leq batchTime < 20
+    \end{cases}
+$$
 
 ## Network approximation functions
+
+TODO: Rewrite this part:
+
+- Fix mean method.
+- Link to relevant freedomlayer article.
+
 
 During the approximation of the network size we find the "height" of every node
 in the network. There are `NUM_HEIGHT_FUNCS` random hash functions. We calculate
@@ -436,6 +425,33 @@ See also:
 estimating-counts-of-distinct-values-with-kmv/)
 [sketch the day hyperloglog](https://research.neustar.biz/2012/10/25/
 sketch-of-the-day-hyperloglog-cornerstone-of-a-big-data-infrastructure/)
+
+
+## The towers selection functions
+
+Given an approximation for the amount of nodes in the network,
+$approxNumNodes$, we calculate the amount of different colors for towers:
+
+$numTowerColors := \log_{2}{approxNumNodes}$
+
+And the wanted amount of towers of any specific color:
+
+$numColoredTowers := \frac{\sqrt{approxNumNodes}}{numTowerColors}$
+
+We assume that every node in the network has access to the current time in UTC
+form. Given the current time (in seconds since epoch), `time`, we define:
+
+$\sqrt{approxNumNodes}$
+
+$$
+isTower(batchIndex, nodeIdHash, color, time) := sha256("AA" |  
+                    batchIndex || "BB" || nodeIdHash || "CC" || color || 
+                    "DD" || time)  / 2^256 < 
+                    < \frac{numColoredTowers}{approxNumNodes}
+$$
+
+During time $time$, a node $nodeIdHash$ is a tower of color $color$ if
+$isTower(batchIndex, nodeIdHash, color, time)$ is true.
 
 
 ## Maintained data structures for every node
@@ -505,63 +521,6 @@ Nodes that are towers also maintain the following for every batch:
     - tower[nodeId].colorGateways 
     Gateways to remote tower. Each gateway is a color of a local tower.
 
-
-## Division of time in a single batch
-
-For the operation of this protocol we assume some ability to synchronize time
-between nodes. Note that this assumption is generally not valid for a strong
-adversary. We assume that all nodes have a similar clock: the global UTC time. 
-
-We choose the amount of towers based on an approximation of the amount of nodes
-in the network. To avoid routing disruptions whenever a new approximation is
-calculated, we perform the network size approximation in batches. At every
-moment every node is taking part in two batches that run simultaneously (in
-different stages), to make sure that routing is always operational.
-
-A batch runs for `BATCH_TIME` minutes. It is divided to the following parts:
-
-
-```
-|---- NET_APPROX_TIME ----|-- TOWER_CONVERGENCE_TIME --|-- operational routing --|
-```
-
-If we denote by `=` the `NET_APPROX_TIME` period, by `*` the
-`TOWER_CONVERGENCE_TIME` period and by `=` the "operational routing" period, we
-should get a time diagram as follows for the two batches:
-
-```
-                    ---[time]--->
-
-batch0:    ... =@****=@****=@****=@****=@**** ...
-batch1: ... =@****=@****=@****=@****=@**** ...
-
-```
-
-Note that all times there is at least one batch in operational routing mode.
-In addition, during the transitions between batches, the old batch is still in
-operational routing mode.
-
-The time period marked with `NET_APPROX_TIME` is the time where the network
-size is approximated. In the beginning of this period, every node keeps a
-snapshot of lowestNodes as lowestNodesPinned for the relevant batchIndex, and
-then sends it to all of his neighbors. If a node encounters a better candidate
-for lowestNodesPinned, he updates it and notifies his neighbors. 
-
-In the end of `NET_APPROX_TIME` time period, lowestNodesPinned can not be
-changed anymore. Hopefully it will be the same for all the nodes in the
-network. `lowestNodesPinned` is then used to calculate `numNodesApprox`
-is an approximation to the amount of nodes in the network. This is done by
-applying the function `approxNumNodes`.
-
-During `TOWER_CONVERGENCE_TIME`, nodes send each other the messages:
-UpdatedLocalTowerPath and RegisterLocalTower. Nodes that are towers send
-UpdatedTowerPath and StoreLookupId to each other. 
-
-No user datagrams may be sent or received on this batch during the
-`NET_APPROX_TIME` and `TOWER_CONVERGENCE_TIME` periods. 
-
-During the "operational routing" period, this batch becomes usable for routing
-and user datagrams may be routed.
 
 
 ## Algorithm for every node
