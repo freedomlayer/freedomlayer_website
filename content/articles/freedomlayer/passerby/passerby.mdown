@@ -441,17 +441,12 @@ $numColoredTowers := \frac{\sqrt{approxNumNodes}}{numTowerColors}$
 We assume that every node in the network has access to the current time in UTC
 form. Given the current time (in seconds since epoch), `time`, we define:
 
-$\sqrt{approxNumNodes}$
+$hashTower(batchIndex, nodeIdHash, color, time) := sha256("AA" || batchIndex || \\
+    "BB" || nodeIdHash || "CC" || color || "DD" || time)$
 
-$$
-isTower(batchIndex, nodeIdHash, color, time) := sha256("AA" |  
-                    batchIndex || "BB" || nodeIdHash || "CC" || color || 
-                    "DD" || time)  / 2^256 < 
-                    < \frac{numColoredTowers}{approxNumNodes}
-$$
-
-During time $time$, a node $nodeIdHash$ is a tower of color $color$ if
-$isTower(batchIndex, nodeIdHash, color, time)$ is true.
+During time $time$, a node $nodeIdHash$ is a tower of color $color$ in batch
+$batchIndex$ if $\frac{hashTower}{2^{256}} < 
+\frac{numColoredTowers}{approxNumNodes}$.
 
 
 ## Maintained data structures for every node
