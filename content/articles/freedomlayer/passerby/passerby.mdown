@@ -257,23 +257,24 @@ following messages can be transferred:
   Used both for new choice of a local tower, or changes in the network
   layout. This message is sent periodically, originating from tower nodes.
 
-  ```
-  localTower,   timestamp                  
-  a_1,          sign{localTower}(a_1, prev)
-  a_2,          sign{a_1}(a_2, prev)       
-  \cdots                                   
-  a_k,          sign{a_{k-1}}(a_k, prev)
-  ```
+```
+localTower,   timestamp                  
+a_1,          sign{localTower}(a_1, prev)
+a_2,          sign{a_1}(a_2, prev)       
+...
+a_k,          sign{a_{k-1}}(a_k, prev)
+```
 
 - **RegisterLocalTower**(batchIndex, towerColor, SignedPathToTower) [L0]
   A node registers with a local tower.
-  ```
-  nodeId,       timestamp              
-  a_1,          sign{nodeId}(a_1, prev)
-  a_2,          sign{a_1}(a_2, prev)   
-  \cdots                               
-  localTower,   sign{a_{k-1}}(localTower, prev)
-  ```
+
+```
+nodeId,       timestamp              
+a_1,          sign{nodeId}(a_1, prev)
+a_2,          sign{a_1}(a_2, prev)   
+...
+localTower,   sign{a_{k-1}}(localTower, prev)
+```
   The local tower will keep knowledge of paths to all nodes in the given
   chain of signatures.
 
@@ -305,6 +306,7 @@ signedContent is of the form:
   This message originates at a local tower and arrives at the relevant node.
 
 The structure for `encContent` in MessageReceivedLocalTower is as follows:
+
 - senderPublicKey (senderNodeId)
 - encSymmetricKey == Encrypt{key=senderPrivateKey}(symmetricKey)
 - encDatagramData == Encrypt{key=symmetricKey, nonce=random}(timestamp, datagramData)
@@ -408,11 +410,11 @@ sketch-of-the-day-hyperloglog-cornerstone-of-a-big-data-infrastructure/)
 Given an approximation for the amount of nodes in the network,
 $approxNumNodes$, we calculate the amount of different colors for towers:
 
-$numTowerColors := \log_{2}{approxNumNodes}$
+$$numTowerColors := \log_{2}{approxNumNodes}$$
 
 And the wanted amount of towers of any specific color:
 
-$numColoredTowers := \frac{\sqrt{approxNumNodes}}{numTowerColors}$
+$$numColoredTowers := \frac{\sqrt{approxNumNodes}}{numTowerColors}$$
 
 We assume that every node in the network has access to the current time in UTC
 form. Given the current time (in seconds since epoch), `time`, we define:
@@ -421,8 +423,8 @@ $hashTower(batchIndex, nodeIdHash, color, time) := sha256("AA" || batchIndex || 
     "BB" || nodeIdHash || "CC" || color || "DD" || time)$
 
 During time $time$, a node $nodeIdHash$ is a tower of color $color$ in batch
-$batchIndex$ if $\frac{hashTower}{2^{256}} < 
-\frac{numColoredTowers}{approxNumNodes}$.
+$batchIndex$ if 
+$$\frac{hashTower}{2^{256}} < \frac{numColoredTowers}{approxNumNodes}$$
 
 
 ## Protocol constants
