@@ -347,30 +347,6 @@ messages quickly between towers.
   Route a message between towers until it arrives at destTowerId.
   (Then the receiving tower will send a MessageReceivedLocalTower to destNodeId)
 
-## Protocol constants
-
-- `SYM_KEY_CACHE_TIME = 30 minutes`: maximum amount of time an entry could be
-  kept in symKeyMap cache.
-
-- `MESSAGE_CACHE_TIME = 1 minute`: the maximum amount of time an entry could
-  be kept in the messageCacheMap cache.
-
-- `LOCAL_TOWER_EXPIRY = 1 minute`: The time it takes for knowledge of local
-  tower to expire.
-
-- `TOWER_ODD_BITS = 15`: The odds for a node to be a tower of a specific color
-  are 2^(-TOWER_ODD_BITS).
-
-- `BATCH_TIME = 20 minutes`: Every such period of time
-  a batch of network size approximation passes.
-
-- `NET_APPROX_TIME = 2 minutes`: Time to approximate the amount of nodes in
-  the network.
-
-- `TOWER_CONVERGE_TIME = 3 minutes`: Time for convergence of towers
-  information.
-
-- `NUM_HEIGHT_FUNCS = 40`: Amount of random functions from nodeId into [0,1]
 
 
 ## Batch functions
@@ -447,6 +423,29 @@ $hashTower(batchIndex, nodeIdHash, color, time) := sha256("AA" || batchIndex || 
 During time $time$, a node $nodeIdHash$ is a tower of color $color$ in batch
 $batchIndex$ if $\frac{hashTower}{2^{256}} < 
 \frac{numColoredTowers}{approxNumNodes}$.
+
+
+## Protocol constants
+
+- `SYM_KEY_CACHE_TIME = 30 minutes`: maximum amount of time an entry could be
+  kept in symKeyMap cache.
+
+- `MESSAGE_CACHE_TIME = 1 minute`: the maximum amount of time an entry could
+  be kept in the messageCacheMap cache.
+
+- `LOCAL_TOWER_EXPIRY = 1 minute`: The time it takes for knowledge of local
+  tower to expire.
+
+- `BATCH_TIME = 20 minutes`: Every such period of time
+  a batch of network size approximation passes.
+
+- `NET_APPROX_TIME = 2 minutes`: Time to approximate the amount of nodes in
+  the network.
+
+- `TOWER_CONVERGE_TIME = 3 minutes`: Time for convergence of towers
+  information.
+
+- `NUM_HEIGHT_FUNCS = 40`: Amount of random functions from nodeId into [0,1]
 
 
 ## Maintained data structures for every node
