@@ -48,10 +48,12 @@ PATH = 'content'
 
 TIMEZONE = 'UTC'
 
-DEFAULT_LANG = u'en'
+DEFAULT_LANG = 'en'
+
+LOCALE = ('en_US.UTF-8')
 
 DATE_FORMATS = {
-        u'en': '%a, %d %b %Y',
+        'en': '%a, %d %b %Y',
 }
 
 
