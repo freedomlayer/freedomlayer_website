@@ -38,6 +38,9 @@ resources to calculate short paths between nodes in the the large network
 graph.
 
 
+TODO: Possibly explain new ideas about maintaining index nodes (Distributing
+over gateways) to avoid problems.
+
 ## Index nodes setup
 
 As index nodes are crucial for the ability of nodes to route message in the
@@ -108,6 +111,8 @@ of this direct connection.
 
 ## Querying for paths
 
+TODO: Rewrite this:
+
 Whenever a node $v$ wants to send a message to some remote node $u$, $v$ first
 needs to know about a path of nodes from $v$ to $u$. This is done by asking an
 some index nodes for a path.
@@ -157,34 +162,67 @@ signatures. If the path is valid, it can be used to send messages to $u$.
 The passerby router is a state machine. It communicates using the following
 messages:
 
-Input messages:
+### Input messages:
 
-- **Initialize(privateKey, currentTime)**
-    Initialize the state machine.
+**Initialize**
 
-- **TimeTick(currentTime)**
-    Information about the current time.
+- privateKey
+- currentTime
 
-- **PortConnected(neighborIdHash)**
-    A new port was connected to the passerby router.
-
-- **PortDisconnected(neighborIdHash)**
-    A port was disconnected from the passerby router.
-
-- **MsgFromPort(portId, msg)**
-    Message was received from a given port.
-
-- **SendMessage(remoteNodeIdHash, datagramData)**
-    A request to send a message to a remote node id hash.
+Initialize the state machine.
 
 
-Output messages:
+**TimeTick**
 
-- **MsgToPort(portId, msg)**
-    A request to send message through port portId.
+- currentTime
 
-- **MessageReceived(remoteNodeIdHash, datagramData)**
-    A remote message was received from remoteNodeIdHash.
+Information about the current time.
+
+
+**PortConnected**
+
+- neighborIdHash
+
+A new port was connected to the passerby router.
+
+
+**PortDisconnected**
+
+- neighborIdHash
+
+A port was disconnected from the passerby router.
+
+
+**MsgFromPort**
+
+- portId
+- msg
+
+Message was received from a given port.
+
+**SendMessage**
+
+- remoteNodeIdHash
+- datagramData
+
+A request to send a message to a remote node id hash.
+
+
+
+### Output messages:
+
+**MsgToPort**
+
+- portId
+- msg
+
+A request to send message through port portId.
+
+**MessageReceived**
+- remoteNodeIdHash
+- datagramData
+
+A remote message was received from remoteNodeIdHash.
 
 
 Node id hashes are of size $120$ bits ($15$ bytes). This allows them to fit into
@@ -215,6 +253,23 @@ a_2,          sign{a_1}(a_2, prev)
 dstNodeId,   sign{a_{k-1}}(dstNodeId, prev)
 ```
 
+A doubly signed path from `srcNodeId` to `dstNodeId` is of the form:
+
+```
+srcNodeId, 
+sign{srcNodeId}(srcNodeId->a_1, timestamp)
+sign{a_1}(a_1->srcNodeId, timestamp)
+a_1
+sign{a_1}(a_1->a_2, timestamp)
+sign{a_2}(a_2->a_1, timestamp)
+a_2
+...
+a_{k-1}
+sign{a_{k-1}}(a_{k-1}->dstNodeId, timestamp)
+sign{dstNodeId}(dstNodeId->a_{k-1}, timestamp)
+dstNodeId
+```
+
 
 **UpdateIndexNode** (L0)
 
@@ -237,7 +292,7 @@ updates.
 **MsgByPath** (L0)
 
 - nodeIdPath
-- content
+- L1content
 
 Where nodeIdPath is a path of nodeIds.
 This message allows to send content to a remote node using a path of nodeIds.
@@ -257,58 +312,43 @@ Sent over MsgByPath. A node reports to an index node about Connect/Disconnect
 event of the edge edgeSrc --> edgeDest. This message is also broadcasted
 between index nodes.
 
-**RequestPath** // MsgByPath (L1)
 
-- srcNodeId
-- dstNodeId
-- nonce
-- timestamp
-- Signature: Sign{srcNodeId}(all message)
+**EncDatagram** // MsgByPath (L1)
+
+- senderPublicKey (senderNodeId)
+- encSymmetricKey == Encrypt{key=recipientPublicKey}(symmetricKey)
+- encDatagramData == Encrypt{key=symmetricKey, nonce=random}(
+    timestamp, pseudoId, nextNodeId, L2content)
+
+If nextNodeId equals to the recipient's public key, then L2content contains an
+actual message. Otherwise, L2content is a pair of encSymmetricKey and
+encDatagramData to be sent to nextNodeId as a new EncDatagram message.
+This allows sending messages anonymously.
+
+
+## Index node service messages
+
+**RequestPath** // EncDatagram // MsgByPath (L2)
+
+- srcNodeId or srcNodeHashId
+- dstNodeId or dstNodeHashId
 
 Sent from a node to a close index node, requesting a path from srcNodeId to
 dstNodeId.
 
-**ResponsePath** // MsgByPath (L1)
+**ResponsePath** // EncDatagram // MsgByPath (L2)
 
-TODO
-
-
-**Datagram**// MsgByPath (L1)
-
-- senderPublicKey (senderNodeId)
-- encSymmetricKey == Encrypt{key=senderPrivateKey}(symmetricKey)
-- encDatagramData == Encrypt{key=symmetricKey, nonce=random}(timestamp, datagramData)
+- DoublySignedPath
 
 
+**RequestRandomNodes** // EncDatagram // MsgByPath (L2)
+
+**ResponseRandomNodes** // EncDatagram // MsgByPath (L2)
+
+- A list of doubly signed paths from nodeId of the sender 
+    to a few random nodes.
 
 
-signedContent is of the form:
-
-- timestamp
-- nonce
-- msgType
-- payload
-- signature: Sign{key=senderNodeId}(all message)
-
-
-## Messages between nodes and towers
-
-
-- **SendMessageLocalTower**(dstNodeId, encContent) [L1]
-  Sent over MsgByTowerColor
-  Send a message with given content to a destination id.
-  originates at some node and arrives at a local tower.
-
-- **MessageReceivedLocalTower**(encContent) [L1]
-  Sent over MsgByPath
-  A message received through the local tower with given content.
-  This message originates at a local tower and arrives at the relevant node.
-
-The structure for `encContent` in MessageReceivedLocalTower is as follows:
-
-- senderPublicKey (senderNodeId)
-- encSymmetricKey == Encrypt{key=senderPrivateKey}(symmetricKey)
-- encDatagramData == Encrypt{key=symmetricKey, nonce=random}(timestamp, datagramData)
 
 
 ## Maintained data structures for every node
@@ -320,6 +360,8 @@ TODO
 
 The following represents an algorithm of operation for a node with node id
 myNodeId.
+
+TODO
 
 
 
