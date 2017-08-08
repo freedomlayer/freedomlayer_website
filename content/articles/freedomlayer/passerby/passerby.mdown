@@ -205,52 +205,82 @@ into frames of discrete messages.
 
 TODO: Edit this (Messages from old protocol):
 
-
-For any direct connection with a neighboring node, the
-following messages can be transferred:
-
-- **LowestNodes**(nodeList) [L0]
-  nodeList is a list with elements of the form:
-  (heightIndex, nodeId, timestamp, sign{nodeId}(timestamp))
-  This message is sent periodically between neighboring nodes. The lowest node
-  ids are used to approximate the amount of nodes in the network.
-
-- **LowestNodesPinned**(batchIndex, nodeList) [L0]
-  nodeList is a list with elements of the form:
-  (heightIndex, nodeId, timestamp, sign{nodeId}(timestamp))
-  batchIndex is the index of the batch this pinned lowest nodes set refers to.
-
-- **UpdatedLocalTowerPath**(batchIndex, towerColor, SignedPathFromTower) [L0]
-  Used both for new choice of a local tower, or changes in the network
-  layout. This message is sent periodically, originating from tower nodes.
+A signed path from `srcNodeId` to `dstNodeId` is of the form:
 
 ```
-localTower,   timestamp                  
-a_1,          sign{localTower}(a_1, prev)
-a_2,          sign{a_1}(a_2, prev)       
-...
-a_k,          sign{a_{k-1}}(a_k, prev)
-```
-
-- **RegisterLocalTower**(batchIndex, towerColor, SignedPathToTower) [L0]
-  A node registers with a local tower.
-
-```
-nodeId,       timestamp              
+srcNodeId,    timestamp              
 a_1,          sign{nodeId}(a_1, prev)
 a_2,          sign{a_1}(a_2, prev)   
 ...
-localTower,   sign{a_{k-1}}(localTower, prev)
+dstNodeId,   sign{a_{k-1}}(dstNodeId, prev)
 ```
-  The local tower will keep knowledge of paths to all nodes in the given
-  chain of signatures.
 
-- **MsgByTowerColor**(batchIndex, towerColor, senderNodeId, signedContent) [L0]
-  This message allows to send content to a local colored tower.
 
-- **MsgByPath**(batchIndex, nodeIdPath, senderNodeId, signedContent) [L0]
-  Where nodeIdPath is a path of nodeIds.
-  This message allows to send content to a remote node using a path of nodeIds.
+**UpdateIndexNode** (L0)
+
+- SignedPathFromIndex
+
+A message about a path to a local index node. This message originates from
+index nodes and propagate through the network. If a node receives this
+message and updates his list of best index nodes as a result, he forwards
+this message to all of his direct neighbors.
+
+
+**RegisterWithIndex** (L0)
+
+- SignedPathToIndex
+
+An index node registers with a local index, to get messages about network
+updates.
+
+
+**MsgByPath** (L0)
+
+- nodeIdPath
+- content
+
+Where nodeIdPath is a path of nodeIds.
+This message allows to send content to a remote node using a path of nodeIds.
+
+
+**StructureUpdate** // MsgByPath (L1)
+
+- type: Connect/Disconnect
+- edgeSrc
+- edgeDest
+- nonce
+- timestamp
+- Signature: Sign{edgeSrc}(all message)
+
+
+Sent over MsgByPath. A node reports to an index node about Connect/Disconnect
+event of the edge edgeSrc --> edgeDest. This message is also broadcasted
+between index nodes.
+
+**RequestPath** // MsgByPath (L1)
+
+- srcNodeId
+- dstNodeId
+- nonce
+- timestamp
+- Signature: Sign{srcNodeId}(all message)
+
+Sent from a node to a close index node, requesting a path from srcNodeId to
+dstNodeId.
+
+**ResponsePath** // MsgByPath (L1)
+
+TODO
+
+
+**Datagram**// MsgByPath (L1)
+
+- senderPublicKey (senderNodeId)
+- encSymmetricKey == Encrypt{key=senderPrivateKey}(symmetricKey)
+- encDatagramData == Encrypt{key=symmetricKey, nonce=random}(timestamp, datagramData)
+
+
+
 
 signedContent is of the form:
 
@@ -260,10 +290,11 @@ signedContent is of the form:
 - payload
 - signature: Sign{key=senderNodeId}(all message)
 
+
 ## Messages between nodes and towers
 
 
-- **SendMessageLocalTower**(destNodeId, encContent) [L1]
+- **SendMessageLocalTower**(dstNodeId, encContent) [L1]
   Sent over MsgByTowerColor
   Send a message with given content to a destination id.
   originates at some node and arrives at a local tower.
