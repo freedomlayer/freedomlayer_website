@@ -1,5 +1,5 @@
 Title: The passerby protocol
-Date: 2017-08-08 14:47
+Date: 2017-08-09 12:50
 Author: real
 
 **Work in progress!**
@@ -49,12 +49,13 @@ To make this work, every index node advertises its existence periodically. This
 is done by sending a message to all his direct neighbors in the network,
 declaring himself as an index node, signing over a timestamp.
 
-Every node $v$ keeps at all time gateways to the $k$ closest index nodes he
-knows of. By gateways we mean that for every closest index node $w$, $v$
-remembers some direct neighbor that is a beginning of a path $w$. The gateway
-is obtained as the node who first told $v$ about the existence of $w$.
+Every node $v$ keeps at all times paths to the closest index nodes he knows of.
+He keeps $k$ different paths to closest index nodes through every direct
+neighbor he has. Hence even if some of $v$'s direct neighbors give $v$ paths to
+invalid index nodes, $v$ will still have some paths to valid nodes from his
+other direct neighbors.
 
-We denote $v$'s list of closest index nodes and their gateways as $L(v)$.
+We denote $v$'s list of closest index nodes and their paths as $L(v)$.
 Whenever any node in this list changes, $v$ informs all of his neighbors about
 the change. Using this method changes in the state of index nodes in the
 network propagates to all the relevant nodes in the network in a short time.
@@ -111,8 +112,6 @@ of this direct connection.
 
 ## Querying for paths
 
-TODO: Rewrite this:
-
 Whenever a node $v$ wants to send a message to some remote node $u$, $v$ first
 needs to know about a path of nodes from $v$ to $u$. This is done by asking an
 some index nodes for a path.
@@ -133,6 +132,10 @@ from $v$ to $u$. The index node $w$ generates a path from $v$ to $u$ as follows:
 $v$ then checks the returned path from $v$ to $u$, and verifies all the
 signatures. If the path is valid, it can be used to send messages to $u$.
 
+The choice of returning a path from $v$ to $u$ through a random intermediate
+node $x$ is made to to lower network congestion, and make the communication
+more resilient. 
+
 
 ## Main limitations
 
@@ -147,7 +150,7 @@ signatures. If the path is valid, it can be used to send messages to $u$.
       it as the network becomes very large. However, it seems like this should
       be manageable for pretty large networks.
 
-- Compensation:
+- Incentives:
     - It is bandwidth and CPU consuming to be an Index node, however, Index node
       operators are not compensated for this extra effort. In addition, the direct
       neighbors of an index node will probably suffer too from In the future we could
@@ -168,6 +171,7 @@ messages:
 
 - privateKey
 - currentTime
+- isIndexNode
 
 Initialize the state machine.
 
@@ -240,8 +244,6 @@ into frames of discrete messages.
 
 
 ## Messages between routing engines
-
-TODO: Edit this (Messages from old protocol):
 
 A signed path from `srcNodeId` to `dstNodeId` is of the form:
 
@@ -318,12 +320,10 @@ between index nodes.
 - senderPublicKey (senderNodeId)
 - encSymmetricKey == Encrypt{key=recipientPublicKey}(symmetricKey)
 - encDatagramData == Encrypt{key=symmetricKey, nonce=random}(
-    timestamp, pseudoId, nextNodeId, L2content)
+    timestamp, L2content)
 
-If nextNodeId equals to the recipient's public key, then L2content contains an
-actual message. Otherwise, L2content is a pair of encSymmetricKey and
-encDatagramData to be sent to nextNodeId as a new EncDatagram message.
-This allows sending messages anonymously.
+
+Encrypted datagram being passed between nodes.
 
 
 ## Index node service messages
@@ -336,18 +336,15 @@ This allows sending messages anonymously.
 Sent from a node to a close index node, requesting a path from srcNodeId to
 dstNodeId.
 
+
 **ResponsePath** // EncDatagram // MsgByPath (L2)
 
 - DoublySignedPath
 
 
-**RequestRandomNodes** // EncDatagram // MsgByPath (L2)
+**UserDatagram** // EncDatagram // MsgByPath (L2)
 
-**ResponseRandomNodes** // EncDatagram // MsgByPath (L2)
-
-- A list of doubly signed paths from nodeId of the sender 
-    to a few random nodes.
-
+- content
 
 
 
