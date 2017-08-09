@@ -242,6 +242,8 @@ into frames of discrete messages.
 
 ## Messages between routing engines
 
+Messages are of three possible layers, marked as L0, L1, L2.
+
 A signed path from `srcNodeId` to `dstNodeId` is of the form:
 
 ```
