@@ -110,7 +110,7 @@ of this direct connection.
 ## Querying for paths
 
 Whenever a node $v$ wants to send a message to some remote node $u$, $v$ first
-needs to know about a path of nodes from $v$ to $u$. This is done by asking an
+needs to know about a path of nodes from $v$ to $u$. This is done by asking
 some index nodes for a path.
 
 $v$ chooses a random index node $w$ from $L(v)$ and sends him a request for a path
