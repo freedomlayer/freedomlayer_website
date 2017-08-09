@@ -38,9 +38,6 @@ resources to calculate short paths between nodes in the the large network
 graph.
 
 
-TODO: Possibly explain new ideas about maintaining index nodes (Distributing
-over gateways) to avoid problems.
-
 ## Index nodes setup
 
 As index nodes are crucial for the ability of nodes to route message in the
