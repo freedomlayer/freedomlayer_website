@@ -321,8 +321,12 @@ between index nodes.
 - encDatagramData == Encrypt{key=symmetricKey, nonce=random}(
     timestamp, L2content)
 
-
 Encrypted datagram being passed between nodes.
+
+
+**UserDatagram** // EncDatagram // MsgByPath (L2)
+
+- content
 
 
 ## Index node service messages
@@ -341,9 +345,6 @@ dstNodeId.
 - DoublySignedPath
 
 
-**UserDatagram** // EncDatagram // MsgByPath (L2)
-
-- content
 
 
 
