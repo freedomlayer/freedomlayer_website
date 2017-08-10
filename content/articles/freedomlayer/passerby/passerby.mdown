@@ -344,21 +344,3 @@ dstNodeId.
 
 - DoublySignedPath
 
-
-
-
-
-## Maintained data structures for every node
-
-TODO
-
-
-## Algorithm for every node
-
-The following represents an algorithm of operation for a node with node id
-myNodeId.
-
-TODO
-
-
-
