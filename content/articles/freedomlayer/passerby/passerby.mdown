@@ -316,10 +316,9 @@ between index nodes.
 
 **EncDatagram** // MsgByPath (L1)
 
-- senderPublicKey (senderNodeId)
 - encSymmetricKey == Encrypt{key=recipientPublicKey}(symmetricKey)
 - encDatagramData == Encrypt{key=symmetricKey, nonce=random}(
-    timestamp, L2content)
+    timestamp, senderPublicKey, L2content)
 
 Encrypted datagram being passed between nodes.
 
