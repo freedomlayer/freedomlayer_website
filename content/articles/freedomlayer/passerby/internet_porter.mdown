@@ -53,11 +53,11 @@ message. It allows to overcome replay attacks.
 **EncMessage** (L0)
 
 - encSymmetricKey == Encrypt{key=recipientPublicKey}
-    - keepaliveRandValue (A KeepAlive rand value from the near past)
+    - pastKeepaliveRandValue (A KeepAlive rand value from the near past)
     - symmetricKey
     - Sign{key=senderPublicKey}(keepaliveRandValue, symmetricKey)
 - encDatagramData == Encrypt{key=symmetricKey, nonce=random}(
-    randValue, L1Content)
+    pastKeepaliveRandValue, L1Content)
 
 A message that contains an underlying Passerby routing engine message.
 
