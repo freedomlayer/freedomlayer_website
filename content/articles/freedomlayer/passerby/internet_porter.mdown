@@ -1,0 +1,94 @@
+Title: Passerby Internet Porter
+Date: 2017-08-10 15:21
+Author: real
+
+## Intro
+
+The passerby protocol allows routing of messages in a network of nodes, where
+every node is directly connected to a few other predefined nodes.
+Internet Porter is a mechanism for obtaining direct connections for Passerby
+as TCP connections over the Internet.
+
+## Initialization
+
+Passerby Internet Porter begins with the following input:
+
+- A list of known remote nodes: (ip, port)
+- Maximum amount of simultaneous connections.
+
+## Internet Porter messages
+
+**KnownNodes**
+
+- A list (ip, port) of known nodes.
+
+
+**Hello**
+
+- nodeIdHash
+
+This message is sent right after setting up the sending part of a two sided TCP
+connection. It introduces nodeIdHash of the sender to the receiver.
+
+**EngineMessage**
+
+- content
+
+A message that contains an underlying Passerby routing engine message.
+
+
+## The types of connections between nodes
+
+There are two types of connections between nodes in the Internet Porter
+protocol.
+
+- A usual TCP connection for exchange of known nodes.
+- A two sided TCP connection for exchange of EngineMessage messages.
+
+A node can determine the type of connection formed according to the first
+message sent. If the first message sent is KnownNodes, then it is a uaul TCP
+connection. If the first message sent is Hello, then it is a two sided TCP
+connection.
+
+In order to exchange known nodes, a node $a$ opens a TCP connection to node $b$
+and sends KnownNodes message. In turn, $b$ returns a KnownNodes message and
+then closes the connection.
+
+In order to exchange EngineMessage messages, we use a two sided TCP
+connection: A connection that is made of two TCP connections, one for sending
+data and one for receiving data. This is done to avoid races.
+If two nodes wants to connect to each other at the same time, each node will
+setup just one TCP connection out of the two, which will create a full two
+sided connection.
+
+A two sided TCP connection between nodes $a$ and $b$ is created as follows:
+
+- $a$ forms a TCP connection to $b$.
+- $a$ sends an Hello message.
+- $b$ opens a TCP connection to $a$,
+- $b$ sends an Hello message.
+- $a$ and $b$ exchange EngineMessage messages.
+
+Note that $a$ ($b$) sends EngineMessage messages only on the TCP connection it
+has opened. Message from $a$ ($b$) sent on the connection opened by $b$ ($a$)
+will be ignored.
+
+
+## Maintaining remote nodes list
+
+Every node should maintain his list of remote nodes, or else in the future he
+will lose contact with the network. An initial remote nodes list should be
+obtained from somewhere (Possibly from the same place the software was
+obtained, or from a friend).
+
+Periodically a node picks a random entry from his list of remote nodes, and
+query him with a KnownNodes message. If the node doesn't answer, his
+liveliness is decreased. When the liveliness reaches $0$, the entry is removed
+from the list of remote nodes.
+
+The list of KnownNodes should be diversified. It should contain IP addresses
+that look different enough. In addition, When forming a new KnownNodes
+list from an old list, the new list should contain representation from nodes in
+the old list. In other words, we expect that the new list will contain nodes
+from every KnownNodes message sent by nodes in the old list.
+
