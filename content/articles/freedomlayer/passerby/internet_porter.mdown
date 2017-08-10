@@ -18,12 +18,22 @@ Passerby Internet Porter begins with the following input:
 - A list of known remote nodes: (ip, port)
 - Maximum amount of simultaneous two sided TCP connections.
 
-## Internet Porter messages
 
-**KnownNodes**
+## Internet Porter messages KnownNodes messages
+
+**RequestKnownNodes**
+
+Request a list of known nodes from remote host.
+
+
+**ResponseKnownNodes**
 
 - A list (ip, port) of known nodes.
 
+Right after sending this message, the TCP connection is closed.
+
+
+## Direct connection messages between nodes
 
 **Hello**
 
@@ -31,6 +41,11 @@ Passerby Internet Porter begins with the following input:
 
 This message is sent right after setting up the sending part of a two sided TCP
 connection. It introduces nodeIdHash of the sender to the receiver.
+
+**KeepAlive**
+
+This message is sent periodically. If other messages were sent recently there
+is no need to sent this message.
 
 **EngineMessage**
 
@@ -45,7 +60,7 @@ TODO:
 - Possibly remove the two sided connection TCP. Find another way to solve
     the race problem.
 - Some kind of cryptographic exchange to make sure the both sides are who they
-    claim to be. Does this belong in this layer? Maybe in the routing_engine
+    claim to be. Does this belong in this layer? Maybe in the routing engine
     layer?
 
 There are two types of connections between nodes in the Internet Porter
@@ -81,6 +96,7 @@ A two sided TCP connection between nodes $a$ and $b$ is created as follows:
 Note that $a$ ($b$) sends EngineMessage messages only on the TCP connection it
 has opened. Message from $a$ ($b$) sent on the connection opened by $b$ ($a$)
 will be ignored.
+
 
 
 ## Maintaining remote nodes list
