@@ -2,6 +2,8 @@ Title: Passerby Internet Porter
 Date: 2017-08-10 15:21
 Author: real
 
+**work in progress!**
+
 ## Intro
 
 The passerby protocol allows routing of messages in a network of nodes, where
