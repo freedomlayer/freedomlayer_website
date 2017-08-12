@@ -1,5 +1,5 @@
 Title: Passerby
-Date: 2017-08-02 17:55
+Date: 2017-08-12 21:55
 Author: real
 
 The passerby project is an experimental protocol for routing datagrams in a mesh
@@ -8,4 +8,4 @@ network.
 Note: **Work in progress**.
 
 - [Routing engine]({filename}/articles/freedomlayer/passerby/routing_engine.mdown)
-- [Internet Porter]({filename}/articles/freedomlayer/passerby/internet_porter.mdown)
+- [TCP Porter]({filename}/articles/freedomlayer/passerby/tcp_porter.mdown)
