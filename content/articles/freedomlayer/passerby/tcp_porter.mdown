@@ -96,7 +96,7 @@ The following happens during a setup of TCP Porter link between $a$ and $b$:
 3. Filtering ($b$):
     - If $b$ doesn't expect TCP Porter link from $a$'s public key, $b$ closes
         the TCP connection. 
-   - If $b$ already has a TCP Porter link from $a$'s public key, $b$ closes
+    - If $b$ already has a TCP Porter link from $a$'s public key, $b$ closes
        the TCP connection.
 4. Otherwise, $b$ sends Hello message to $a$.
 5. Filtering ($a$):
