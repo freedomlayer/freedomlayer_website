@@ -101,7 +101,7 @@ The following happens during a setup of TCP Porter link between $a$ and $b$:
 4. Otherwise, $b$ sends Hello message to $a$.
 5. Filtering ($a$):
     - If $a$ already has a TCP Porter link from $b$'s public key, $a$ closes
-        the TCP connection.
+        the old TCP connection.
 5. $a$ and $b$ both send KeepAlive messages over EncMessage. At this point the
    TCP Porter link is said to be open.
 6. $a$ and $b$ can now send UserMessage messages using the values from the
