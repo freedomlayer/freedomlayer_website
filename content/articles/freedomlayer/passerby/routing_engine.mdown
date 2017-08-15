@@ -156,6 +156,11 @@ more resilient.
     - Nodes that relay more data on the network are not compensated for their
       work.
 
+- Denial of service
+    - It is possible to announce many index nodes that do nothing. If there are
+      enough such index node next to some node $v$, $v$ might not be able to
+      obtain paths to remote nodes.
+
 
 ## Passerby router interface
 
