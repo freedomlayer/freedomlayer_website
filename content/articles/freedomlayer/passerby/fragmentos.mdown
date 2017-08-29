@@ -139,7 +139,7 @@ reconstruct the original message $M$.
 ## Messages structure
 
 A message $M$ from is sent from $x$ to $y$ by transmitting a few Fragmentos
-messages. Each fragmentos message is of the following form:
+messages. Each Fragmentos message is of the following form:
 
 ```
 - messageId         [8 bytes]
@@ -192,9 +192,68 @@ the Fragmentos message. It should be able to detect $8$ bytes errors, and fix
 the message given that at most $4$ byte errors have occured.
 
 
-## Fragmentos protocol
+## Maximum Fragmentos datagram
 
-Sending a message 
+We assume that we use a protocol where we can not send datagrams over $n$ bytes.
+We begin by calculating the maximum size of datagram we can send using the
+Fragmentos system over the given protocol.
+
+We can split a message to at most $256$ shares, a restriction imposed by the
+size of the field $GF(256)$. Therefore $2b - 1 \leq 256$ and $b \leq 128$.
+
+Every message share resides inside a Fragmentos message. The rest of the fields
+in a Fragmentos message (`messageId, b, shareIndex, errorCorrection`) take $8 +
+1 + 1 + 8 = 18$ bytes. Hence we are left with $n - 18$ bytes for `shareData`.
+
+Therefore we should be able to send a `T` data message of size at most $128
+\cdot (n-18)$. Recall that `T` contains `nonce8, paddingCount` which take
+together $8 + 1 = 9$ bytes. This leaves $d(n) := 128\cdot(n-18) - 9$ bytes for $M$.
+
+
+If we use UDP as the underlying protocol for sending datagrams, we can pick as
+an example the value $n=512$ as a safe size for a UDP packet. By safe we mean
+that it is unlikely for the UDP packet to be fragmented by the lower IP layer.
+
+As a result, we obtain $d(n) = 128 \cdot (512 - 18) - 9 = 63223$ bytes (close
+to $64KB$) as the maximum possible Fragmentos datagram.
+
+
+### Sending a message
+
+We assume the value $n$ for the maximum size for a safe datagram in the
+underlying datagram protocol.
+
+Algorithm for sending a message $M$:
+
+1. If $len(M) > d(n)$, the message is too large. We abort.
+
+2. Calculate $b := \lceil\frac{8 + 1 + len(M)}{n - 18}\rceil$.
+
+3. Construct `T := nonce8 || paddingCount || M || padding`.
+   `padding` should contain enough `\x00` bytes so that `T` will have length
+   that is divisible by $b$. `paddingCount` is set to the amount of padding
+   bytes.
+
+   TODO: Check if $b$ and $len(T)$ behave nicely here. Division and modulo here
+   could be tricky.
+
+4. Split `T` to $2b-1$ data shares.
+
+5. For each data share of `T`, create a Fragmentos message and send it to the destination. 
+   The message's fields will be filled as follows:
+
+    - `messageId = sha256(T)[0:8]`
+    - `b`
+    - `shareIndex` is the data share number.
+    - `shareData` is the data of the share.
+    - `errorCorrection` is calculated over all the previous fields of the
+        message.
+
+
+
+
+
+### Receiving a message
 
 TODO: 
     - How buffering works. 
