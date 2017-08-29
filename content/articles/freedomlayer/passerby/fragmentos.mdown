@@ -176,7 +176,7 @@ original message. It is necessary that $b \in [1, 128]$. Any other value of $b$
 is illegal. A message with illegal $b$ value must be ignored.
 
 $shareIndex$ is the index of the current share. There are $2b - 1$ shares,
-therefore $0 \leq shareIndex \leq 2b - 1$. Any other value of $shareIndex$ is
+therefore $0 \leq shareIndex < 2b - 1$. Any other value of $shareIndex$ is
 illegal. A message with illegal $shareIndex$ value must be discarded.
 
 $shareData$ is the actual data of this share. Its length could be deduced by
