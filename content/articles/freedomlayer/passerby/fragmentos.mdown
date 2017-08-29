@@ -88,13 +88,14 @@ First we divide $M$ into chunks of size $b$ bytes. If $len(M)$ is not
 divisible by $b$, we add padding $0$ bytes to the end of $M$. This means that
 the last chunk has possibly some $0$ bytes in the end.
 
-For example, if $M$ is the message `\x12\x34\x56\x78\x90\xab\xcd\xef\x55` and
-$b = 4$, we will get the following chunks:
+For example, if $M$ is the message `12 34 56 78 90 ab cd ef 55` (Every two
+characters are one byte, base 16) and $b = 4$, we will get the following
+chunks (Every line represents a chunk):
 
 ```
-\x12\x34\x56\x78
-\x90\xab\xcd\xef
-\x55\x00\x00\x00
+12 34 56 78
+90 ab cd ef
+55 00 00 00
 ```
 
 Note that the last chunk has three $0$ padding bytes.
@@ -108,8 +109,31 @@ Eventually we will have $2b - 1$ data shares, each one having $v := \lceil len(M
 b \rceil$ bytes. Given that $M$ is divided to the chunks $W_0,  W_1, W_2
 \dots W_{v-1}$, byte number $k$ in data share $i$ is $P_{W_k}(i)$.
 
+Continuing the previous example of the message $M$: `12 34 56 78 90 ab cd ef
+55`, every chunk is split into $2b - 1 = 7$ small shares:
 
-TODO: Add a picture to explain the division here.
+```
+                ds0 ds1 ds2 ds3 ds4 ds5 ds6
+               ----------------------------
+12 34 56 78 ->  78  08  94  88  ae  ab  05
+90 ab cd ef ->  ef  19  0a  bb  6d  14  8a
+55 00 00 00 ->  00  55  92  24  e4  c1  3d
+```
+
+And we obtain the following $2b - 1 = 7$ data shares:
+
+```
+ds0: 78 ef 00
+ds1: 08 19 55
+ds2: 94 0a 92
+ds3: 88 bb 24
+ds4: ae 6d e4
+ds5: ab 14 c1
+ds6: 05 8a 3d
+```
+
+Every $b = 4$ shares from these $2b - 1 = 7$ data shares are enough to
+reconstruct the original message $M$.
 
 
 ## Messages structure
