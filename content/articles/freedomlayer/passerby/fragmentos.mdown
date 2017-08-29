@@ -138,9 +138,63 @@ reconstruct the original message $M$.
 
 ## Messages structure
 
-TODO
+A message $M$ from is sent from $x$ to $y$ by transmitting a few Fragmentos
+messages. Each fragmentos message is of the following form:
 
-## Protocol state machine
+```
+- messageId         [8 bytes]
+- b                 [1 byte]
+- shareIndex        [1 byte]
+- shareData         [variable amount of bytes]
+- errorCorrection   [8 bytes]
+```
+
+The actual data that we split to data shares is: 
+
+`T := nonce8 || paddingCount || M || padding`
+
+Where `||` means concatenation. `nonce8` is of size $8$ bytes, `paddingCount`
+is of size $1$ byte.
+
+The value `paddingCount := b - ((8 + 1 + len(M)) % b)` is the amount of $0$
+padding bytes at the end of the message $M$. Recall that we need padding bytes
+at the end of $M$ to make sure that the data we split to data shares, $T$, is
+of size divisible by $b$. We use the value of `paddingCount` to be able to cut
+the padding bytes at the receiving side.
+
+`nonce8` is a random 8 bytes nonce that is generated at the time of sending the
+message $M$. It is used as means for the receiver end to distinguish between
+identical messages sent during the same short period of time. For two identical
+messages, different `nonce8` values will generate different `messageId`-s.
+
+
+$messageId$ is obtained by calculating `sha256` over `nonce8 || modb || M`,
+taking only the first $8$ bytes of the result, 
+
+$b$ represents the amount of shares that are required to reconstruct the
+original message. It is necessary that $b \in [1, 128]$. Any other value of $b$
+is illegal. A message with illegal $b$ value must be ignored.
+
+$shareIndex$ is the index of the current share. There are $2b - 1$ shares,
+therefore $0 \leq shareIndex \leq 2b - 1$. Any other value of $shareIndex$ is
+illegal. A message with illegal $shareIndex$ value must be discarded.
+
+$shareData$ is the actual data of this share. Its length could be deduced by
+subtracting the total size of all the other fields from the total size of the
+datagram. It contains a share of the data `T`.
+
+$errorCorrection$ is an $8$ bytes [Reed
+Solomon](https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction)
+error correction code. Currently we use the implementation of the
+[reed-solomon](https://docs.rs/reed-solomon/0.1.6/reed_solomon/) rust crate for
+this functionality. The error correction code is applied for whole contents of
+the Fragmentos message. It should be able to detect $8$ bytes errors, and fix
+the message given that at most $4$ byte errors have occured.
+
+
+## Fragmentos protocol
+
+Sending a message 
 
 TODO: 
     - How buffering works. 
