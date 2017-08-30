@@ -163,7 +163,7 @@ The actual data that we split to data shares is:
 Where `||` means concatenation. `nonce8` is of size $8$ bytes, `paddingCount`
 is of size $1$ byte.
 
-The value `paddingCount := b - ((8 + 1 + len(M)) % b)` is the amount of $0$
+The value `paddingCount := (b - ((8 + 1 + len(M)) % b)) % b` is the amount of $0$
 padding bytes at the end of the message $M$. Recall that we need padding bytes
 at the end of $M$ to make sure that the data we split to data shares, $T$, is
 of size divisible by $b$. We use the value of `paddingCount` to be able to cut
@@ -267,7 +267,10 @@ Algorithm for sending a message $M$:
     messages, having messageIds as keys. Every entry contains:
 
     - The value `b`.
+    - `shareLengh`: length (in bytes) of a share data. (All shares should have 
+        exactly the same amount of bytes).
     - A set of the received data shares: `(shareIndex, shareData)` 
+
 
 
 ### Upon receiving a Fragmentos message `F`:
@@ -281,10 +284,12 @@ Algorithm for sending a message $M$:
    discarded.
 
 3. If there exists an entry `entry` with the key `F.messageId` inside
-   `curMessages` but `entry.b != F.b`, discard the message.
+   `curMessages` but `entry.b != F.b` or `entry.shareLength !=
+   len(F.shareData)`, discard the message.
 
 4. If there is no entry with the key `F.messageId` inside `curMessages`,
-   create a new entry with `messageId = F.messageId` and `b = F.b`.
+   create a new entry with `messageId = F.messageId`, `b = F.b` and
+   `shareLength = len(F.shareData)`.
 
 5. Given that the message was not discarded yet, denote by `entry` the relevant
    entry from `curMessages` relevant for our message.
