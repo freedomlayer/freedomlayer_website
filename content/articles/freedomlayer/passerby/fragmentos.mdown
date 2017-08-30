@@ -4,6 +4,13 @@ Author: real
 
 **work in progress!**
 
+## Abstract
+
+Fragmentos is a fragmentation system, allowing to send large datagrams over
+protocols that support only small datagrams. Compared to traditional
+fragmentation systems, Fragmentos sends about twice more data while achieving
+improved delivery rate.
+
 ## Intro
 
 Given two nodes $x$ and $y$ on the internet, if $x$ attempts to send a large
