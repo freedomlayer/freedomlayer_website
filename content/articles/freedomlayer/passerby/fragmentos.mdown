@@ -168,8 +168,8 @@ identical messages sent during the same short period of time. For two identical
 messages, different `nonce8` values will generate different `messageId`-s.
 
 
-$messageId$ is obtained by calculating `sha256` over `nonce8 || modb || M`,
-taking only the first $8$ bytes of the result, 
+$messageId$ is obtained by calculating `sha256` over `T`, taking only the first
+$8$ bytes of the result.
 
 $b$ represents the amount of shares that are required to reconstruct the
 original message. It is necessary that $b \in [1, 128]$. Any other value of $b$
