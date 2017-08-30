@@ -143,7 +143,7 @@ Every $b = 4$ shares from these $2b - 1 = 7$ data shares are enough to
 reconstruct the original message $M$.
 
 
-## Messages structure
+## Fragmentos messages structure
 
 A message $M$ from is sent from $x$ to $y$ by transmitting a few Fragmentos
 messages. Each **Fragmentos message** is of the following form:
