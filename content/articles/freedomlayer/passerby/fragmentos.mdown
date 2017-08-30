@@ -23,7 +23,7 @@ $q := p^2 = \frac{9}{16}$, which represents much lower odds for successful
 delivery.
 
 This document presents a different fragmentation method which increases the
-likelyhood of successful delivery given the model discussed above. For example,
+likelihood of successful delivery given the model discussed above. For example,
 Instead of splitting a large datagram into two packets, we create three shares
 of the datagram in a way that every two shares are enough to reconstruct the
 original datagram. 
@@ -189,7 +189,7 @@ error correction code. Currently we use the implementation of the
 [reed-solomon](https://docs.rs/reed-solomon/0.1.6/reed_solomon/) rust crate for
 this functionality. The error correction code is applied for whole contents of
 the Fragmentos message. It should be able to detect $8$ bytes errors, and fix
-the message given that at most $4$ byte errors have occured.
+the message given that at most $4$ byte errors have occurred.
 
 
 ## Maximum Fragmentos datagram
@@ -233,9 +233,6 @@ Algorithm for sending a message $M$:
    `padding` should contain enough `\x00` bytes so that `T` will have length
    that is divisible by $b$. `paddingCount` is set to the amount of padding
    bytes.
-
-   TODO: Check if $b$ and $len(T)$ behave nicely here. Division and modulo here
-   could be tricky.
 
 4. Split `T` to $2b-1$ data shares.
 
