@@ -139,7 +139,7 @@ reconstruct the original message $M$.
 ## Messages structure
 
 A message $M$ from is sent from $x$ to $y$ by transmitting a few Fragmentos
-messages. Each Fragmentos message is of the following form:
+messages. Each **Fragmentos message** is of the following form:
 
 ```
 - messageId         [8 bytes]
@@ -168,22 +168,22 @@ identical messages sent during the same short period of time. For two identical
 messages, different `nonce8` values will generate different `messageId`-s.
 
 
-$messageId$ is obtained by calculating `sha256` over `T`, taking only the first
+`messageId` is obtained by calculating `sha256` over `T`, taking only the first
 $8$ bytes of the result.
 
-$b$ represents the amount of shares that are required to reconstruct the
+`b` represents the amount of shares that are required to reconstruct the
 original message. It is necessary that $b \in [1, 128]$. Any other value of $b$
 is illegal. A message with illegal $b$ value must be ignored.
 
-$shareIndex$ is the index of the current share. There are $2b - 1$ shares,
+`shareIndex` is the index of the current share. There are $2b - 1$ shares,
 therefore $0 \leq shareIndex < 2b - 1$. Any other value of $shareIndex$ is
 illegal. A message with illegal $shareIndex$ value must be discarded.
 
-$shareData$ is the actual data of this share. Its length could be deduced by
+`shareData` is the actual data of this share. Its length could be deduced by
 subtracting the total size of all the other fields from the total size of the
 datagram. It contains a share of the data `T`.
 
-$errorCorrection$ is an $8$ bytes [Reed
+`errorCorrection` is an $8$ bytes [Reed
 Solomon](https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction)
 error correction code. Currently we use the implementation of the
 [reed-solomon](https://docs.rs/reed-solomon/0.1.6/reed_solomon/) rust crate for
@@ -250,7 +250,7 @@ Algorithm for sending a message $M$:
 
 ## Receiving a message
 
-Structures to maintain in memory:
+### Structures to maintain in memory:
 
 - `usedMessageIds`: A set of messageIds that were recently processed.
     A messageId has to stay in this list for at least `PROCESSED_TIMEOUT`
@@ -263,7 +263,7 @@ Structures to maintain in memory:
     - A set of the received data shares: `(shareIndex, shareData)` 
 
 
-Upon receiving a Fragmentos message `F`:
+### Upon receiving a Fragmentos message `F`:
 
 1. Use `F.errorCorrection` error correction code to possibly correct the
    message's content. If not possible, discard the message.
@@ -301,7 +301,7 @@ Upon receiving a Fragmentos message `F`:
 13. Extract `M` from `T` and return it as a received message.
 
 
-Cleanup algorithm (Being ran periodically):
+### Cleanup algorithm (Being ran periodically):
 
 - If an `entry` in `curMessages` is older than `PROCESSED_TIMEOUT` seconds,
     remove it and add `entry.messageId` to `usedMessageIds`.
