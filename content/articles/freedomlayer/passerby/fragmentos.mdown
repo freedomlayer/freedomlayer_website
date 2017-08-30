@@ -218,7 +218,7 @@ As a result, we obtain $d(n) = 128 \cdot (512 - 18) - 9 = 63223$ bytes (close
 to $64KB$) as the maximum possible Fragmentos datagram.
 
 
-### Sending a message
+## Sending a message
 
 We assume the value $n$ for the maximum size for a safe datagram in the
 underlying datagram protocol.
@@ -251,13 +251,64 @@ Algorithm for sending a message $M$:
 
 
 
+## Receiving a message
+
+Structures to maintain in memory:
+
+- `usedMessageIds`: A set of messageIds that were recently processed.
+    A messageId has to stay in this list for at least `PROCESSED_TIMEOUT`
+    seconds. Then it may be removed.
+
+- `curMessages`: A dictionary for currently processed
+    messages, having messageIds as keys. Every entry contains:
+
+    - The value `b`.
+    - A set of the received data shares: `(shareIndex, shareData)` 
 
 
-### Receiving a message
+Upon receiving a Fragmentos message `F`:
 
-TODO: 
-    - How buffering works. 
-    - Timeouts?
+1. Use `F.errorCorrection` error correction code to possibly correct the
+   message's content. If not possible, discard the message.
+
+2. If `F.messageId` is in `usedMessageIds`,
+   `usedMessageIds[F.massageId]` is refreshed, so that it will stay
+   another `PROCESSED_TIMEOUT` seconds before being cleaned up. The message is
+   discarded.
+
+3. If there exists an entry `entry` with the key `F.messageId` inside
+   `curMessages` but `entry.b != F.b`, discard the message.
+
+4. If there is no entry with the key `F.messageId` inside `curMessages`,
+   create a new entry with `messageId = F.messageId` and `b = F.b`.
+
+5. Given that the message was not discarded yet, denote by `entry` the relevant
+   entry from `curMessages` relevant for our message.
+
+6. If `F.shareIndex` is already present in `entry`, discard the message.
+
+7. Insert `(F.shareIndex, F.shareData)` as a new data share to
+  `entry`.
+
+8. If the amount of shares in the is less than `b`, return.
+
+9. Add `messageId` to `usedMessageIds`. 
+
+10. Remove `entry` from `curMessages`.
+
+11. Reconstruct the shares to obtain `T := nonce8 || paddingCount || M || padding`. 
+
+12. If `sha256(T)[0:8] != entry.messageId`:  remove the entry from `curMessages`
+   and return.
+
+13. Extract `M` from `T` and return it as a received message.
 
 
+Cleanup algorithm (Being ran periodically):
+
+- If an `entry` in `curMessages` is older than `PROCESSED_TIMEOUT` seconds,
+    remove it and add `entry.messageId` to `usedMessageIds`.
+
+- If a `messageId` in `usedMessagesIds` is older than `PROCESSED_TIMEOUT`
+    seconds, remove it.
 
