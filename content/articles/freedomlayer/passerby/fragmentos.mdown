@@ -299,7 +299,7 @@ Algorithm for sending a message $M$:
 7. Insert `(F.shareIndex, F.shareData)` as a new data share to
   `entry`.
 
-8. If the amount of shares in the is less than `b`, return.
+8. If the amount of shares in the entry is less than `b`, return.
 
 9. Add `messageId` to `usedMessageIds`. 
 
