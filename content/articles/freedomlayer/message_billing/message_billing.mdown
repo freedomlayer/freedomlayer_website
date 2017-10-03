@@ -1,6 +1,7 @@
 Title: A technique for message billing
 Date: 2017-10-03 17:41
 Author: real
+Status: draft
 
 
 ## Abstract
