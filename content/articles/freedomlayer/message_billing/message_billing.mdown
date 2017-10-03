@@ -1,0 +1,227 @@
+Title: A technique for message billing
+Date: 2017-10-03 17:41
+Author: real
+
+
+## Abstract
+
+TODO
+
+## Intro
+
+Assume a network of nodes (computers), where each node is directly connected to
+a few other nodes. We would like to have a system where for every two nodes $x$
+and $y$, $x$ can send a message to $y$. The message begins from $x$, and
+pass only through direct connections until it reaches $y$.
+
+We would like to provide incentives for nodes in the network to route messages,
+for a few reasons:
+
+- To increase the likelihood of a message to arrive at its destination.
+- To encourage new nodes to join the network and help with routing messages.
+
+In this document we introduce a system in which sending a message costs money
+to the sender. The receiver and all the intermediate nodes that helped to pass
+the message earn money.
+
+
+## Routing setup
+
+We assume a setup that allows routing messages between any two nodes in the
+network. We first assume that every node in the network has some Id, possibly
+a public key. We denote nodes by their Ids in the network.
+
+A message sent from the node $x$ to the node $y$ has the following form:
+
+- `doubly_signed_path`: Doubly signed nodes list: from $x = v_0, v_1, \dots, v_k = y$, where $v_j,
+    v_{j+1}$ are directly connected. In addition, for $0 \leq j < k$ the list includes
+    $s_{v_j}(v_{j+1})$ and $s_{v_{j+1}}(v_j)$.
+
+- `content`: Message content.
+
+
+$s_a(b)$ is a signature by $a$ that claims that $b$ is a direct neighbor of
+$a$. This signature contains a timestamp, and it will expire after some known
+period of time. This means that in the signed nodes list, for every two
+adjacent nodes $v_j, v_{j+1}$, $v_j$ testifies that $v_{j+1}$ is his direct
+neighbor in the network, and $v_{j+1}$ testifies that $v_j$ is his direct
+neighbor in the network.
+
+Whenever a node $u$ receives a message, it first inspects the signed nodes list
+and verifies all the signatures and the timestamps inside of them. Then $u$
+searches for himself inside hte list of singed nodes list. 
+
+If $u$ is the last node on the list, $u$ receives the messages. Otherwise, if
+$u = v_j$ for some $j$ in the list, then $u$ passes the message to the next
+node in the list: $v_{j+1}$.
+
+The origin of the signed nodes list are outside of the scope of this document.
+We assume that whenever a node $x$ wants to send a message to a node $y$, $x$
+can obtain a doubly signed list of nodes that begins with $x$ and ends with
+$y$.
+
+
+## Billing algorithm
+
+For every two directly connected nodes $a, b$ in the network, $a$ maintains a
+balance for $b$ and $b$ maintains a balance for $a$. The balances are always
+non-negative. Generally speaking, $a$ can send message through $b$ as long as
+its balance at $b$ is positive.
+
+To allow billed messages, we add two extra fields to every message: 
+
+- `payment_proposal`: An amount proposed for transferring the message to its
+    destination.
+
+- `time_frame`: The amount of time given for transferring the message to its
+    destination and returning a proof of receipt.
+
+
+So we define a `forward` message as follows:
+
+- `doubly_signed_path`
+- `content`
+- `payment_proposal`
+- `time_frame`
+
+To mark the receipt of a `forward` message `backwards`. A `backwards` message
+is an acknowledgement of a `forward` message. It contains the following fields:
+
+- `doubly_signed_path` - Should be read backwards when passing this message.
+- `receipt_signature` - A signature from the last node on the
+    `doubly_signed_path` that the message was received.
+
+
+Example: Assume that a node $x$ wants to send the message `Hello node!` to a
+node $y$ along the path of nodes $x = v_0, v_1, v_2, v_3 = y$, $x$ may create
+the following message:
+
+- `doubly_signed_path`: $x = v_0, v_1, v_2, v_3 = y$
+- `content`: `Hello node!`
+- `payment_proposal`: $15$ units
+- `time_frame`: $1$ minute.
+
+$x$ then sends this message to $v_1$. $v_1$ receives this message, and possibly
+modifies it a bit, as follows:
+
+- `doubly_signed_path`: $x = v_0, v_1, v_2, v_3 = y$
+- `content`: `Hello node!`
+- `payment_proposal`: $11$ units
+- `time_frame`: $50$ seconds.
+
+This means that if the message is delivered successfuly, $y$ will earn $4$
+units. This is because $x$ promised to pay $v_1$ $15$ units, and $v_1$ promised
+to pay $v_2$ $11$ units. $15 - 11 = 4$).
+
+$v_2$ then receives this message, and possibly modifies it a bit too, as
+follows:
+
+- `doubly_signed_path`: $x = v_0, v_1, v_2, v_3 = y$
+- `content`: `Hello node!`
+- `payment_proposal`: $6$ units
+- `time_frame`: $35$ seconds.
+
+If the message is delivered successfuly, $v_2$ will earn $11 - 6 = 5$ units.
+
+Finally, $v_2$ sends the message to $y$. $y$ receives the message, creates a
+`receipt_signature` and then sends a `backwards` message of the form:
+
+- `doubly_signed_path`: $x = v_0, v_1, v_2, v_3 = y$
+- `receipt_signature` 
+
+to the node $v_2$. At the moment of sending the message, $y$ assumes that $v_2$
+has just paid him $6$ units.
+
+$v_2$ then passes the `backwards` message to $v_1$. At the moment of sending
+the message to $v_1$, $v_2$ assumes that $v_1$ has just paid him $11$ units.
+
+$v_1$ passes the `backwards` message to $x$. At the moment of sending the
+message to $x$, $v_1$ assumes that $x$ has just paid him $15$ units.
+
+Finally when $x$ receives the message, $x$ knows that the message was received
+by $y$. At that moment $x$ was billed $15$ units to send the message, and the
+nodes $v_1, v_2, y$ earned $4, 5, 6$ units respectively.
+
+
+## Incentives 
+
+We want to make sure that no player could exploit the system presented above
+for messsage billing. We consider here various scenarios and show for each one
+why each player earns the most money when he plays by the rules.
+
+
+**(1)** A `forward` message is sent from $x$ to $y$, but some node $v_j$ in the
+middle of the path between $x$ and $y$ does not pass the mesasge.
+
+If $v_j$ is offered a reasonable `payment_proposal` and `time_frame` it is
+better for him to pass the message to the next node in the
+doubly signed path, because he will possibly earn money. If $v_j$ doesn't pass
+the message he will for sure not earn money.
+
+
+**(2)** A `forward` message is sent from $x$ to $y$, and some node $v_j$ in the
+middle of the path takes most of the money of the proposal to himself, and
+leaves very little to the next node $v_{j+1}$.
+
+$v_j$ could take money to himself only until a certain value for which the next
+nodes will not be willing to pass the `forward` message, because the
+compensation is too small for the work done (Or the compensation might reach
+$0$).
+
+
+**(3)** $y$ receives a `forward` message but doesn't send back a `backwards`
+message.
+
+If $y$ got a very low `payment_proposal`, he will not send back a `backwards`
+message because the money units earned are not worth the work of sending back a
+`backwards` message.
+
+If the `payment_proposal` amount is large enough, $y$ will want to send back a
+`backwards` message to earn the money.
+
+
+**(4)** A `backwards` message is sent back from $y$ to $x$, but some node $v_{j+1}$
+in the middle of the path between $x$ and $y$ does not pass the message to
+$v_j$.
+
+This means that $v_{j+1}$ will not earn the money promised by $v_j$, while at
+the same time it lost money due to the `backwards` message he just received
+from $v_{j+2}$. The reasonable thing for $v_{j+1}$ to do is to forward the
+`backwards` message to $v_j$.
+
+
+**(5)** $x$ tries to send a message to an unknown node with Id $z$.
+
+This is usually not possible because $x$ has to obtain a doubly signed path
+from $x$ to $z$, that was signed recently.
+
+
+## Using `time_frame` for consistent receipt and billing
+
+TODO
+
+## Choosing `payment_proposal`
+
+TODO
+
+## Dealing with freeriders
+
+An adversary that owns two nodes $x,z$ sends `forward` messages from $x$ to
+$z$ without sending `backwards` message back to $x$.
+
+Hence the adversary can route message for free between $x$ and $z$, because the
+intermediate nodes will never be paid.
+
+TODO: This is a major problem that needs a solution.
+
+An idea to solve this problem: If a node $a$ receives very often `forward`
+messages from his neighbor $b$ but does not receive any matching `backwards`
+messages, $a$ will ignore all messages from $b$.
+
+Another idea is having the last node before $z$ ban $z$ from receiving messages
+after a few times that $z$ is given a `forward` message but does not send back
+a `backwards` message.
+
+## Sending large payments using billed messages
+
+TODO
