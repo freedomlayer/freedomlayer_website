@@ -256,8 +256,12 @@ can only be sent by the owner of the token.
 
 **RequestToken**
 
-A message for requesting ownership of the token from the remote node.
 This message is empty.
+
+A message for requesting ownership of the token from the remote node.
+If this message is sent by the node that currently owns the token, the remote
+node should resend the last UpdateM message.
+
 
 
 Suppose for example that the node $a$ crashes during the receipt of a message.
