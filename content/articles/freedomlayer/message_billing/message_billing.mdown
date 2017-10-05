@@ -198,7 +198,6 @@ from $x$ to $z$, that was signed recently.
 
 
 ## Using `time_frame` for consistent receipt and billing
-
 TODO
 
 ## Choosing `payment_proposal`
@@ -226,3 +225,45 @@ a `backwards` message.
 ## Sending large payments using billed messages
 
 TODO
+
+
+## Keeping account between neighboring nodes
+
+Let $a,b$ be two directly connected nodes. $a$ and $b$ keep account of units
+debt between each other. At any given time, $a$ may owe $b$ some amount of
+money units, or $b$ may owe $a$ some amount of money units. We denote by
+$M(a,b)$ the amount of money units $a$ owes $b$. $|M(a,b)| \leq C$ for some
+predetermined value $C$.
+
+There should always be agreement between $a$ and $b$ about the value of
+$M(a,b)$. This consistency is maintained using "Token communication".  We
+assume the existence of a token, where at any time only one of $a, b$ can hold
+the token. Only the holder of the token can change the agreed upon value of
+$M(a,b)$. 
+
+The following are the possible messages between $a$ and $b$:
+
+**UpdateM**
+
+- `old_signature`: Signature from the last UpdateM message sent.
+- `new_M`: New value of $M(sender, receiver)$.
+- `reasons`: Reasons for updating $M$ (A description of all the transactions).
+- `nonce`: Random nonce
+- `signature`: A signature by the sender over the whole message.
+
+This message changes ownership of the token from the sender to the receiver. It
+can only be sent by the owner of the token.
+
+**RequestToken**
+
+A message for requesting ownership of the token from the remote node.
+This message is empty.
+
+
+Suppose for example that the node $a$ crashes during the receipt of a message.
+This means that $b$ thinks that $a$ received the message, but $a$ didn't
+receive it. If the message was RequestToken, $b$ can resend it after a while.
+
+After a while $a$ restarts.
+
+What to do if one of the nodes crashes during the receipt of a message?
