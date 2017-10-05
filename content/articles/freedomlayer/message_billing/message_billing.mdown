@@ -271,3 +271,32 @@ receive it. If the message was RequestToken, $b$ can resend it after a while.
 After a while $a$ restarts.
 
 What to do if one of the nodes crashes during the receipt of a message?
+
+---
+
+Some questions:
+
+- How to deal with cooperating freeriders? `<-- Important`
+- How to pay the indexers fairly?
+    - Requests for communication paths.
+    - Requests for payment paths.
+    - What if indexers don't respond?
+
+
+Idea for dealing with freeriders:
+
+Half of the sum is payed during the `forward` message, and half of the sum is
+paid at the `backwards` message. This way nodes have interest in passing
+`forward` message, because they could make more money when the `backwards`
+message arrives.
+
+In other words, when sending a `forward` message with a `payment_proposal`, it
+is assumed at that point that half of the `payment_proposal` was already paid
+to the receiving node.
+
+- Does this not corrupt any of the other incentives?
+- What to do in case of odd `payment_proposal`?
+
+
+
+
