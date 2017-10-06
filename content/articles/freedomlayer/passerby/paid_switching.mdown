@@ -1,0 +1,154 @@
+Title: Paid packet switching protocol
+Date: 2017-10-06 17:37
+Author: real
+Status: draft
+
+
+## Abstract
+
+TODO
+
+## Intro
+
+Assume a network of nodes (computers), where each node is directly connected to
+a few other nodes. We want to be able to send messages between every two nodes
+$x$ and $y$. We also want to compensate nodes that pass messages. A node that
+wants to send a message will have to somehow pay the nodes that take part in
+the message transfer.
+
+
+## Switch interface
+
+### Input messages:
+
+The switch is given an assymetric encryption component that can decrypt and
+sign using the private key of the user.
+
+**Initialize**
+
+- currentTime
+- isIndexNode
+
+Initialize the state machine.
+
+
+**TimeTick**
+
+- currentTime
+
+Information about the current time.
+
+
+**PortConnected**
+
+- neighborIdHash
+
+A new port was connected to the passerby switch.
+
+
+**PortDisconnected**
+
+- neighborIdHash
+
+A port was disconnected from the passerby switch.
+
+
+**MsgFromPort**
+
+- portId
+- msg
+
+Message was received from a given port.
+
+**SendMessage**
+
+- remoteNodeIdHash
+- datagramData
+
+A request to send a message to a remote node id hash.
+
+### Output messages:
+
+**MsgToPort**
+
+- portId
+- msg
+
+A request to send message through port portId.
+
+**MessageReceived**
+
+- remoteNodeIdHash
+- datagramData
+
+A remote message was received from remoteNodeIdHash.
+
+
+Node id hashes are of size $120$ bits ($15$ bytes). This allows them to fit into
+IPv6 address space of [private
+addresses](https://en.wikipedia.org/wiki/Unique_local_address) (All ipv6
+addresses that begin with the byte 0xfc).
+
+The structure of msg in MsgFromPort and MsgToPort is as follows:
+
+- messageType
+- payload
+
+
+## Switch messages
+
+Messages are of three possible layers, marked as L0, L1, L2.
+
+A signed path from `srcNodeId` to `dstNodeId` is of the form:
+
+```
+srcNodeId,    timestamp              
+a_1,          sign{nodeId}(a_1, prev)
+a_2,          sign{a_1}(a_2, prev)   
+...
+dstNodeId,   sign{a_{k-1}}(dstNodeId, prev)
+```
+
+A doubly signed path from `srcNodeId` to `dstNodeId` is of the form:
+
+```
+srcNodeId, 
+sign{srcNodeId}(srcNodeId->a_1, timestamp)
+sign{a_1}(a_1->srcNodeId, timestamp)
+a_1
+sign{a_1}(a_1->a_2, timestamp)
+sign{a_2}(a_2->a_1, timestamp)
+a_2
+...
+a_{k-1}
+sign{a_{k-1}}(a_{k-1}->dstNodeId, timestamp)
+sign{dstNodeId}(dstNodeId->a_{k-1}, timestamp)
+dstNodeId
+```
+
+
+**UpdateIndexNode** (L0)
+
+- DoublySignedPathFromIndex
+
+A message about a path to a local index node. This message originates from
+index nodes and propagates through the network. If a node receives this message
+and updates any item in his list of best index nodes as a result, he forwards
+this message to all of his direct neighbors.
+
+**ForwardPath** (L0)
+
+- DoublySignedNodeIdPath
+- L1content
+
+**BackwardsPath** (L0)
+
+- DoublySignedNodeIdPath
+- L1content
+
+**RegisterWithIndex** // ForwardPath (L1)
+
+- DoublySignedPathToIndex
+
+An index node registers with a local index, to get messages about network
+updates.
