@@ -317,3 +317,7 @@ TODO:
 - How to report inconsistency?
 - Add Keepalive to TokenChannels using empty transactions list?
 
+- How to initially friend someone?
+- How to properly unfriend someone?
+- How to change friendship capacity?
+
