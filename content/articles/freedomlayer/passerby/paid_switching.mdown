@@ -135,10 +135,17 @@ doesn't own the token.
 - newToken: hash over all previous fields.
 
 
+**NeighborInvalidMoveToken**
+
+- badNeighborMoveTokenCopy
+- reason
+
+
 ### Neighbor transactions
 
 **NeighborTransaction** // NeighborMoveToken
 
+- transactionId
 - transactionType (1 byte). Possible values:
     - LoadFunds
     - RequestPath
@@ -254,11 +261,17 @@ about the structure of the network.
 - randNonce
 - newToken: hash over all previous fields.
 
+**FriendInvalidMoveToken**
+
+- badFriendMoveTokenCopy
+- reason
+
 
 ### Friends transactions
 
 **FriendTransaction** // FriendMoveToken // RequestPath // NeighborTransaction // NeighborMoveToken
 
+- transactionId
 - transactionType (1 byte). Possible values:
     - RequestSendFund
     - ResponseSendFund
@@ -276,12 +289,19 @@ about the structure of the network.
 - halfPaymentProposal
 - timeProposal
 
+
 **ResponseSendFund** // FriendMoveToken // RequestPath // NeighborTransaction // NeighborMoveToken 
 
 - requestId
 - doublySignedFriendIdPath
 - signature: sign{receiverKey}(requestId)
 
+
+**MissedResponseSendFund** // FriendMoveToken // RequestPath // NeighborTransaction // NeighborMoveToken 
+
+- requestId
+- doublySignedFriendIdPath
+- signature: sign{receiverKey}(requestId)
 
 
 
