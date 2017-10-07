@@ -97,8 +97,6 @@ The structure of msg in MsgFromPort and MsgToPort is as follows:
 
 ## Switch messages
 
-Messages are of three possible layers, marked as L0, L1, L2.
-
 A doubly signed path from `srcNodeId` to `dstNodeId` is of the form:
 
 ```
@@ -121,6 +119,11 @@ dstNodeId
 **NeighborRequestToken**
 
 - tokenIndex
+- currentToken
+
+The initiator of the channel sends this message if he doesn't own the token.
+This is done to avoid deadlock, in case the other side also believes that he
+doesn't own the token.
 
 **NeighborMoveToken**
 
@@ -140,13 +143,15 @@ dstNodeId
     - LoadFunds
     - RequestPath
     - ResponsePath
+    - MissedResponsePath
+    - CloseNeighborTokenChannel
 - transactionLength (4 bytes)
 - transactionContent
 
 
 **LoadFunds** // NeighborTransaction // NeighborMoveToken
 
-- receipt (A receipt of payment)
+- receipt (A receipt of payment, taken from ResponseSendFund)
 
 
 **RequestPath** // NeighborTransaction // NeighborMoveToken
@@ -166,6 +171,13 @@ dstNodeId
 
 
 **ResponsePath** // NeighborTransaction // NeighborMoveToken
+
+- requestId
+- requestType
+- responseContent
+- DoublySignedNodeIdPath
+
+**MissedResponsePath** // NeighborTransaction // NeighborMoveToken
 
 - requestId
 - requestType
@@ -231,6 +243,7 @@ about the structure of the network.
 **FriendRequestToken** // RequestPath // NeighborTransaction // NeighborMoveToken
 
 - tokenIndex
+- currentToken
 
 **FriendMoveToken** // RequestPath // NeighborTransaction // NeighborMoveToken
 
@@ -249,6 +262,8 @@ about the structure of the network.
 - transactionType (1 byte). Possible values:
     - RequestSendFund
     - ResponseSendFund
+    - MissedResponseSendFund
+    - CloseFriendTokenChannel
 - transactionLength (4 bytes)
 - transaction
 
@@ -267,4 +282,17 @@ about the structure of the network.
 - doublySignedFriendIdPath
 - signature: sign{receiverKey}(requestId)
 
+
+
+
+TODO:
+
+- How to initialize friendship and change capacity?
+- How to initialize token communication?
+- How to tear down token communication?
+- How to restore token communication after disconnect? (Compensate for lost
+    transactions)
+
+- How to formalize connection/disconnection of FriendTokenChannel?
+- How to report inconsistency?
 
