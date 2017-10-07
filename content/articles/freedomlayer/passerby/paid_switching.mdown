@@ -295,4 +295,5 @@ TODO:
 
 - How to formalize connection/disconnection of FriendTokenChannel?
 - How to report inconsistency?
+- Add Keepalive to TokenChannels using empty transactions list?
 
